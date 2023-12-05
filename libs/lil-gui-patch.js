@@ -20,6 +20,11 @@ lil.Controller.prototype.lock = function(lock = true) {
     return this;
 };
 
+// Alias for updateDisplay
+lil.Controller.prototype.update = function() {
+    this.updateDisplay();
+};
+
 
 // Get Controller by name
 // Adds a function get() to the GUI prototype
@@ -82,7 +87,10 @@ lil.GUI.prototype.updateDisplay = function(obj) {
     for (let c of this.controllersRecursive()) {
         c.updateDisplay();
     }
-}
+};
+
+// Alias for updateDisplay
+lil.GUI.prototype.update = lil.GUI.prototype.updateDisplay;
 
 // Shortcut for adding functions, without the need that the function be a property of an object
 lil.GUI.prototype.addFunction = function(fn) {

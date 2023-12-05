@@ -13,7 +13,7 @@ const FILL_LETTERS = false;
 const FILL_CIRCLES = false;
 const USE_NODE_BACKDROP = false;
 const BACKDROP_SCALE = 200;
-const SEED = 0;
+
 // const BG = [255,255,250];
 const BG = [237, 232, 217];
 
@@ -71,14 +71,15 @@ function setup() {
     gui = new lil.GUI();
     // gui.title('');
     gui.addAll(params);
-    gui.show(false);
+    // gui.show(false);
 
     noLoop();
-    main();
+    
+    gui.get('seed').onChange(() => { redraw(); });
 }
 
 function draw() {
-    // console.log(frameCount);
+    main();
 }
 
 // Get format according to ascpect ratio and maximum width/height
@@ -292,9 +293,11 @@ function save_svg() {
 
 function main() {
     background(BG);
-    if (SEED > 0) {
-        randomSeed(SEED);
+    
+    if (params.seed <= 0) {
+        randomizeSeed(false); // do not redraw; just set param and update gui
     }
+    randomSeed(params.seed);
 
     const pos_m = [width / 2 - M_AND_K_DIST / 2, height / 2];
     const pos_k = [width / 2 + M_AND_K_DIST / 2, height / 2];
@@ -442,10 +445,12 @@ function main() {
     }
 
     if (SHOW_LOGO) {
+        push();
         imageMode(CORNER);
         blendMode(MULTIPLY);
         tint(255, 255 * 0.5); // half opacity
         image(img_logo, width - LOGO_SIZE, height - LOGO_SIZE, LOGO_SIZE, LOGO_SIZE);
+        pop();
     }
 
     if (ADD_BEZIER_BI) {
@@ -480,6 +485,21 @@ function main() {
     }
 }
 
+function nextSeed(d = 1) {
+    params.seed = int(params.seed + d);
+    if (params.seed < 0) { params.seed = 0; }
+    gui.get('seed').update();
+    redraw();
+}
+
+function randomizeSeed(do_redraw = true) {
+    params.seed = int(random(9999) + 1);
+    gui.get('seed').update();
+    if (do_redraw) {
+        redraw();
+    }
+}
+
 document.addEventListener('keydown', e => {
     // console.log(e.key, e.keyCode, e);
 
@@ -492,8 +512,13 @@ document.addEventListener('keydown', e => {
     } else if (e.key == 'h' || e.key == 'Tab') { // h or Tab .. toggle gui
         gui.toggle();
         e.preventDefault();
+    } else if (e.key == 'r') {
+        randomizeSeed();
+    } else if (e.key == 'ArrowRight' || e.key == ' ') {
+        nextSeed(1);
+    } else if (e.key == 'ArrowLeft') {
+        nextSeed(-1);
     }
-
 });
 
 util.register_global({ setup, draw, preload });

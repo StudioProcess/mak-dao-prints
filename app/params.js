@@ -7,7 +7,7 @@ const config = {
 };
 
 const params = {
-
+    seed: [10, 0, undefined, 1]
 };
 
 export { config, params };
