@@ -53,11 +53,11 @@ let img_d, img_dm, img_o, img_m, img_k, img_logo;
 let beziers = [];
 
 function preload() {
-    img_d = loadImage('../img/D.png');
-    img_dm = loadImage('../img/Dm.png');
-    img_o = loadImage('../img/O.png');
-    img_m = loadImage('../img/M.png');
-    img_k = loadImage('../img/K.png');
+    img_d = loadImage('../img/png/D.png');
+    img_dm = loadImage('../img/png/ꓷ.png');
+    img_o = loadImage('../img/png/O.png');
+    img_m = loadImage('../img/png/M.png');
+    img_k = loadImage('../img/png/K.png');
     img_logo = loadImage('../img/logo_emboss.png');
 }
 
@@ -408,8 +408,8 @@ function main() {
                     ellipse(...n, NODE_SIZE * BACKDROP_SCALE / 100 * 0.75, NODE_SIZE * BACKDROP_SCALE / 100);
                 }
                 if (FILL_LETTERS) { fill(0); } else { fill(BG); }
-                rect(...n, 100 / 500 * NODE_SIZE * 1.45, 250 / 500 * NODE_SIZE * 1.45);
-                image(img, ...n, NODE_SIZE * 1.45, NODE_SIZE * 1.45);
+                rect(...n, NODE_SIZE * 0.66, NODE_SIZE);
+                image(img, ...n, NODE_SIZE, NODE_SIZE);
             } else {
                 if (USE_NODE_BACKDROP) {
                     noStroke();
@@ -437,8 +437,8 @@ function main() {
         //   [pos_m, pos_k] = [pos_k, pos_m];
         // }
 
-        image(img_m, ...pos_m, NODE_SIZE * 1.45, NODE_SIZE * 1.45);
-        image(img_k, ...pos_k, NODE_SIZE * 1.45, NODE_SIZE * 1.45);
+        image(img_m, ...pos_m, NODE_SIZE, NODE_SIZE);
+        image(img_k, ...pos_k, NODE_SIZE, NODE_SIZE);
     }
 
     if (SHOW_LOGO) {
