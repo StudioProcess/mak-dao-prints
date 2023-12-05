@@ -3,10 +3,18 @@ import '../libs/lil-gui-patch.js';
 import * as util from './util.js';
 import { config, params } from './params.js';
 
+let gui;
+
 function setup() {
-    console.log('setup');
-    console.log(config);
-    console.log(params);
+    createCanvas(config.W, config.H);
+    pixelDensity(1);
+    frameRate(config.FPS);
+    
+    paper.setup();
+    
+    gui = new lil.GUI();
+    // gui.title('');
+    gui.addAll(params);
 }
 
 function draw() {
