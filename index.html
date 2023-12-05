@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="">
+    
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>mak-dao-prints</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            background-color: #333;
+        }
+        main {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100vw;
+            height: 100vh;
+        }
+        .p5Canvas {
+            outline: 1px solid #666;
+            /* box-shadow: 0px 0px 5px rgba(0, 0, 0, 0.5); */
+            width: auto !important;
+            height: 100% !important;
+            transform: translate3d(0,0,0);
+        }
+    </style>
+</head>
+    
+<body>
+    <main></main>
+    
+    <script src="./node_modules/p5/lib/p5.min.js"></script>
+    <script id="sketch" type="module" src="./app/sketch.js"></script>
+</body>
+
+</html>
