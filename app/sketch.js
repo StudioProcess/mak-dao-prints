@@ -53,6 +53,7 @@ let gui;
 let img_logo;
 let letters_img = {};
 let letters_svg = {};
+let letters_mask = {};
 let state; // state describing the drawing
 
 function load_letter_img(letter, cb, suffix = '.png', prefix = '../img/png/') {
@@ -76,13 +77,17 @@ function preload() {
             template.innerHTML = text;
             letters_svg[letter] = template.content.firstElementChild;
         });
+        load_letter_svg(letter, (strings) => {
+            const text = strings.join('\n');
+            const template = document.createElement('template');
+            template.innerHTML = text;
+            letters_mask[letter] = template.content.firstElementChild;
+        }, ' Mask.svg');
     }
     img_logo = loadImage('../img/logo_emboss.png');
 }
 
 function setup() {
-    
-    // console.log( letters_svg['D'].querySelector('path').getAttribute('d') );
     createCanvas(...get_size(config.FORMAT, config.MAX_W, config.MAX_H));
     pixelDensity(config.PIXEL_DENSITY);
     frameRate(config.FPS);
@@ -561,9 +566,13 @@ function letter_svg_data(letter) {
     return letters_svg[letter].querySelector('path').getAttribute('d');
 }
 
-function letter_path(letter, pos) {
-    const d = letter_svg_data(letter);
-    return `<path transform="translate(${pos[0]} ${pos[1]}) scale(${NODE_SIZE/100}) translate(-50 -50)" vector-effect="non-scaling-stroke" d="${d}"/>\n`;
+function letter_path(letter, pos, decimals = 2) {
+    const m = pt.matrix().translate(...pos).scale(NODE_SIZE/100).translate(-50, -50);
+    let d = letter_svg_data(letter);
+    d = pt.transform_path(d, m, decimals);
+    return `<path d="${d}"/>\n`;
+    
+    // return `<path transform="translate(${pos[0]} ${pos[1]}) scale(${NODE_SIZE/100}) translate(-50 -50)" vector-effect="non-scaling-stroke" d="${d}"/>\n`;
 }
 
 function draw_svg(state, precision = 2) {
