@@ -51,6 +51,7 @@ const SVG_DPI = 600 / 7; // determines printed size (e.g map height of 600 to 7i
 let gui;
 let img_d, img_dm, img_o, img_m, img_k, img_logo;
 let beziers = [];
+let state; // state describing the drawing
 
 function preload() {
     img_d = loadImage('../img/png/D.png');
@@ -79,7 +80,9 @@ function setup() {
 }
 
 function draw() {
-    main();
+    state = generate();
+    draw_p5(state);
+    console.log(state);
 }
 
 // Get format according to ascpect ratio and maximum width/height
@@ -291,14 +294,16 @@ function save_svg() {
     return timestamp;
 }
 
-function main() {
-    background(BG);
-    
+function generate() {    
     if (params.seed <= 0) {
         randomizeSeed(false); // do not redraw; just set param and update gui
     }
     randomSeed(params.seed);
+    
+    state = {};
+    state.seed = params.seed;
 
+    // M and K
     const pos_m = [width / 2 - M_AND_K_DIST / 2, height / 2];
     const pos_k = [width / 2 + M_AND_K_DIST / 2, height / 2];
     let excl_boxes = [];
@@ -307,12 +312,15 @@ function main() {
         const excl_k = [pos_k[0] - M_AND_K_EXCL / 2, pos_k[1] - M_AND_K_EXCL / 2, M_AND_K_EXCL, M_AND_K_EXCL];
         excl_boxes = [excl_m, excl_k];
     }
+    state.pos_m = pos_m;
+    state.pos_k = pos_k;
 
-    // random nodes
+    // compute random nodes
     const nodes = [];
     for (let i = 0; i < NUM_NODES; i++) {
         nodes.push(get_random_pos(nodes, [], excl_boxes));
     }
+    state.nodes = nodes;
 
     // compute distance matrix
     const distances = [];
@@ -327,14 +335,14 @@ function main() {
             distances[j][i] = d;
         }
     }
-    console.log(distances);
+    state.distances = distances;
+    // console.log(distances);
 
     // compute nearest
     const nearest = [];
     for (let ds of distances) {
 
         // find smallest element
-
         let limit_d = -1;
         const order = [];
         for (let j = 0; j < NUM_NODES; j++) {
@@ -353,16 +361,14 @@ function main() {
 
         nearest.push(order);
     }
-    console.log(nearest);
+    state.nearest = nearest;
+    // console.log(nearest);
 
     // compute connection matrix
     const connections = [];
     for (let i = 0; i < NUM_NODES; i++) {
         connections.push([]);
     }
-    noFill();
-    stroke(0);
-    strokeWeight(STROKE_WEIGHT);
     for (let i = 0; i < NUM_NODES; i++) {
         let next = 1;
 
@@ -380,17 +386,58 @@ function main() {
                 connections[j].length < CONNECT_MAX) {
                 connections[i].push(j);
                 connections[j].push(i);
-
-                if (USE_BEZIER) {
-                    pipe_h(...nodes[i], ...nodes[j]);
-                } else {
-                    line(...nodes[i], ...nodes[j]);
-                }
             }
             next += 1;
         }
     }
+    state.connections = connections;
 
+    // compute bifurcation
+    state.bifurcation = null;
+    if (ADD_BEZIER_BI) {
+        // find two connected nodes nearest to center
+        let conn = connection_near(width / 2, height / 2, connections, nodes);
+        if (conn !== null) {
+            // find nearby node that's not connected
+            const near = node_near(width / 2, height / 2, nodes);
+            let n = null;
+            for (let i of near) {
+                if (!connections[conn[0]].includes(i) && !connections[conn[1]].includes(i)) {
+                    n = i;
+                    break;
+                }
+            }
+            if (n !== null) {
+                state.bifurcation = { from_conn: conn, to_node: n };
+            } else {
+                console.log('Couldn\'t find bifurcation additional node')
+            }
+        } else {
+            console.log('Couldn\'t find bifurcation original connection')
+        }
+    }
+    
+    return state;
+}
+
+function draw_p5(state) {
+    background(BG);
+    
+    // draw connections
+    noFill();
+    stroke(0);
+    strokeWeight(STROKE_WEIGHT);
+    const nodes = state.nodes;
+    for (let [i, conn] of state.connections.entries()) {
+        for (let j of conn) {
+            if (USE_BEZIER) {
+                pipe_h(...nodes[i], ...nodes[j]);
+            } else {
+                line(...nodes[i], ...nodes[j]);
+            }
+        }
+    }
+    
     // draw nodes
     if (NODE_SIZE > 0) {
         ellipseMode(CENTER);
@@ -404,7 +451,7 @@ function main() {
                 if (random() < 0.5) {
                     if (random() < 0.5) { img = img_dm; } else { img = img_d; }
                 } else { img = img_o; }
-
+    
                 if (USE_NODE_BACKDROP) {
                     noStroke();
                     fill(BG);
@@ -424,26 +471,21 @@ function main() {
                     stroke(0); }
                 ellipse(...n, NODE_SIZE, NODE_SIZE);
             }
-
+    
             if (SHOW_INDICES) {
                 fill(0);
                 text(i, n[0], n[1] + NODE_SIZE / 2);
             }
         }
     }
-
-    if (SHOW_M_AND_K && USE_LETTERS) {
-        // let pos_m = get_random_pos(nodes, []);
-        // let pos_k = get_random_pos(nodes, []);
-        // if (pos_m[0] > pos_k[0]) {
-        //   // make sure m is left of k
-        //   [pos_m, pos_k] = [pos_k, pos_m];
-        // }
-
-        image(img_m, ...pos_m, NODE_SIZE, NODE_SIZE);
-        image(img_k, ...pos_k, NODE_SIZE, NODE_SIZE);
+    
+    // draw M and k
+    if (SHOW_M_AND_K && USE_LETTERS) {    
+        image(img_m, ...state.pos_m, NODE_SIZE, NODE_SIZE);
+        image(img_k, ...state.pos_k, NODE_SIZE, NODE_SIZE);
     }
-
+    
+    // draw logo
     if (SHOW_LOGO) {
         push();
         imageMode(CORNER);
@@ -452,35 +494,19 @@ function main() {
         image(img_logo, width - LOGO_SIZE, height - LOGO_SIZE, LOGO_SIZE, LOGO_SIZE);
         pop();
     }
-
-    if (ADD_BEZIER_BI) {
-        // find two connected nodes nearest to center
-        let conn = connection_near(width / 2, height / 2, connections, nodes);
-        if (conn !== null) {
-            // find nearby node that's not connected
-            const near = node_near(width / 2, height / 2, nodes);
-            let n = null;
-            for (let i of near) {
-                if (!connections[conn[0]].includes(i) && !connections[conn[1]].includes(i)) {
-                    n = i;
-                    break;
-                }
-            }
-            if (n !== null) {
-                console.log('Bifurcation:', conn, 'to', n)
-                noFill();
-                stroke(0);
-                const p = draw_bifurcation(...nodes[conn[0]], ...nodes[conn[1]], ...nodes[n]);
-                if (SHOW_BI_POINT) {
-                    fill(0);
-                    noStroke();
-                    ellipse(...p, NODE_SIZE / 3, NODE_SIZE / 3);
-                }
-            } else {
-                console.log('Couldn\'t find bifurcation additional node')
-            }
-        } else {
-            console.log('Couldn\'t find bifurcation original connection')
+    
+    // draw bifurcation
+    if (ADD_BEZIER_BI && state.bifurcation) {
+        const nodes = state.nodes;
+        const conn = state.bifurcation.from_conn;
+        const n = state.bifurcation.to_node;
+        noFill();
+        stroke(0);
+        const p = draw_bifurcation(...nodes[conn[0]], ...nodes[conn[1]], ...nodes[n]);
+        if (SHOW_BI_POINT) {
+            fill(0);
+            noStroke();
+            ellipse(...p, NODE_SIZE / 3, NODE_SIZE / 3);
         }
     }
 }
