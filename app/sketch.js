@@ -2,6 +2,7 @@ import * as lil from '../node_modules/lil-gui/dist/lil-gui.esm.min.js';
 import '../libs/lil-gui-patch.js';
 import * as util from './util.js';
 import { config, params } from './params.js';
+import * as pt from './pathtools.js';
 
 const NUM_NODES = 6;
 const GRID_SIZE = 0;
@@ -52,7 +53,6 @@ let gui;
 let img_logo;
 let letters_img = {};
 let letters_svg = {};
-let beziers = [];
 let state; // state describing the drawing
 
 function load_letter_img(letter, cb, suffix = '.png', prefix = '../img/png/') {
@@ -117,17 +117,13 @@ function get_size(aspect_w_by_h, max_w = 600, max_h = 600) {
     }
 }
 
-function draw_bezier(...args) {
-    bezier(...args);
-    beziers.push(args);
-}
-
 // connect two points with a pipe
+// returns arguments for bezier()
 function pipe_h(x1, y1, x2, y2) {
     // middle point
     const m1 = x1 + (x2 - x1) * BEZIER_CONTROL / 100;
     const m2 = x2 - (x2 - x1) * BEZIER_CONTROL / 100;
-    draw_bezier(x1, y1, m1, y1, m2, y2, x2, y2)
+    return [x1, y1, m1, y1, m2, y2, x2, y2];
 }
 
 // function pipe_v(x1, y1, x2, y2) {
@@ -243,7 +239,7 @@ function bezier_slope(t, x1, y1, x2, y2, x3, y3, x4, y4) {
     ];
 }
 
-function draw_bifurcation(x1, y1, x2, y2, x3, y3) {
+function bifurcation(x1, y1, x2, y2, x3, y3) {
     // make sure point 1 is left of point2
     if (x1 > x2) {
         [x1, x2] = [x2, x1];
@@ -273,8 +269,10 @@ function draw_bifurcation(x1, y1, x2, y2, x3, y3) {
     const blen = dist(...p, x2, y2); // length from bifurcation point to original branch endpoint
     const bc1 = [p[0] + s[0] * blen / 100 * BEZIER_BI_CONTROL, p[1] + s[1] * blen / 100 * BEZIER_BI_CONTROL];
     const bc2 = [x3 - (x3 - p[0]) / 100 * BEZIER_BI_CONTROL, y3];
-    draw_bezier(...p, ...bc1, ...bc2, x3, y3);
-    return p;
+    return {
+        bezier: [...p, ...bc1, ...bc2, x3, y3],
+        point: p
+    };
 }
 
 // Save text data to file
@@ -293,24 +291,32 @@ function mm2px(mm, dpi = SVG_DPI) {
     return mm / 25.4 * dpi;
 }
 
+// function save_svg() {
+//     const timestamp = new Date().toISOString();
+//     const format_px = [mm2px(SVG_FORMAT[0]), mm2px(SVG_FORMAT[1])];
+//     // console.log(format_px);
+//     let xml = `<svg version="1.1" xmlns="http://www.w3.org/2000/svg" width="${SVG_FORMAT[0]}mm" height="${SVG_FORMAT[1]}mm" viewBox="0 0 ${format_px[0]} ${format_px[1]}" stroke="black" fill="none" stroke-linecap="round" stroke-width="${STROKE_WEIGHT}">\n`;
+//     // const tl = [ mm2px(SVG_FORMAT[0])/2 - width/2, mm2px(SVG_FORMAT[1])/2 - height/2 ];
+//     //translate(${tl[0]} ${tl[1]})
+//     // xml += `  <g transform="translate(${SVG_FORMAT[0]/2}mm ${SVG_FORMAT[1]/2}mm) scale(1.5) translate(${-width/2} ${-height/2})">\n`;
+//     xml += `  <g transform="translate(${format_px[0]/2} ${format_px[1]/2}) translate(${-width/2} ${-height/2})">\n`;
+//     if (SVG_ADD_FRAME) {
+//         xml += `    <rect x="0" y="0" width="${width}" height="${height}" />\n`;
+//     }
+//     for (let b of beziers) {
+//         xml += `    <path d="M ${b[0]} ${b[1]} C ${b[2]} ${b[3]} ${b[4]} ${b[5]} ${b[6]} ${b[7]}"/>\n`;
+//     }
+//     xml += '  </g>\n';
+//     xml += '</svg>\n';
+//     save_text(xml, timestamp + '.svg', 'image/svg+xml');
+//     return timestamp;
+// }
+
 function save_svg() {
     const timestamp = new Date().toISOString();
-    const format_px = [mm2px(SVG_FORMAT[0]), mm2px(SVG_FORMAT[1])];
-    // console.log(format_px);
-    let xml = `<svg version="1.1" xmlns="http://www.w3.org/2000/svg" width="${SVG_FORMAT[0]}mm" height="${SVG_FORMAT[1]}mm" viewBox="0 0 ${format_px[0]} ${format_px[1]}" stroke="black" fill="none" stroke-linecap="round" stroke-width="${STROKE_WEIGHT}">\n`;
-    // const tl = [ mm2px(SVG_FORMAT[0])/2 - width/2, mm2px(SVG_FORMAT[1])/2 - height/2 ];
-    //translate(${tl[0]} ${tl[1]})
-    // xml += `  <g transform="translate(${SVG_FORMAT[0]/2}mm ${SVG_FORMAT[1]/2}mm) scale(1.5) translate(${-width/2} ${-height/2})">\n`;
-    xml += `  <g transform="translate(${format_px[0]/2} ${format_px[1]/2}) translate(${-width/2} ${-height/2})">\n`;
-    if (SVG_ADD_FRAME) {
-        xml += `    <rect x="0" y="0" width="${width}" height="${height}" />\n`;
-    }
-    for (let b of beziers) {
-        xml += `    <path d="M ${b[0]} ${b[1]} C ${b[2]} ${b[3]} ${b[4]} ${b[5]} ${b[6]} ${b[7]}"/>\n`;
-    }
-    xml += '  </g>\n';
-    xml += '</svg>\n';
-    save_text(xml, timestamp + '.svg', 'image/svg+xml');
+    const text = draw_svg(state);
+    console.log(text);
+    save_text(text, timestamp + '.svg', 'image/svg+xml');
     return timestamp;
 }
 
@@ -465,7 +471,7 @@ function draw_p5(state) {
     for (let [i, conn] of state.connections.entries()) {
         for (let j of conn) {
             if (USE_BEZIER) {
-                pipe_h(...nodes[i], ...nodes[j]);
+                bezier( ...pipe_h(...nodes[i], ...nodes[j]) );
             } else {
                 line(...nodes[i], ...nodes[j]);
             }
@@ -497,9 +503,8 @@ function draw_p5(state) {
                     fill(BG);
                     ellipse(...n, NODE_SIZE * BACKDROP_SCALE / 100, NODE_SIZE * BACKDROP_SCALE / 100);
                 }
-                if (FILL_CIRCLES) { fill(0);
-                    noStroke(); } else { fill(BG);
-                    stroke(0); }
+                if (FILL_CIRCLES) { fill(0); noStroke(); }
+                else { fill(BG); stroke(0); }
                 ellipse(...n, NODE_SIZE, NODE_SIZE);
             }
     
@@ -536,13 +541,76 @@ function draw_p5(state) {
         const n = state.bifurcation.to_node;
         noFill();
         stroke(0);
-        const p = draw_bifurcation(...nodes[conn[0]], ...nodes[conn[1]], ...nodes[n]);
+        const { bezier: b, point: p } = bifurcation(...nodes[conn[0]], ...nodes[conn[1]], ...nodes[n]);
+        bezier(...b);
         if (SHOW_BI_POINT) {
             fill(0);
             noStroke();
             ellipse(...p, NODE_SIZE / 3, NODE_SIZE / 3);
         }
     }
+}
+
+function decimals(precision = 1) {
+    return function(num) {
+        return +num.toFixed(precision);
+    }
+}
+
+function letter_svg_data(letter) {
+    return letters_svg[letter].querySelector('path').getAttribute('d');
+}
+
+function letter_path(letter, pos) {
+    const d = letter_svg_data(letter);
+    return `<path transform="translate(${pos[0]} ${pos[1]}) scale(${NODE_SIZE/100}) translate(-50 -50)" vector-effect="non-scaling-stroke" d="${d}"/>\n`;
+}
+
+function draw_svg(state, precision = 2) {
+    const format_px = [mm2px(SVG_FORMAT[0]), mm2px(SVG_FORMAT[1])];
+    const trunc = decimals(precision);
+    
+    // console.log(format_px);
+    let xml = `<svg version="1.1" xmlns="http://www.w3.org/2000/svg" width="${SVG_FORMAT[0]}mm" height="${SVG_FORMAT[1]}mm" viewBox="0 0 ${format_px[0]} ${format_px[1]}" stroke="black" fill="none" stroke-linecap="round" stroke-width="${STROKE_WEIGHT}">\n`;
+    xml += `  <g transform="translate(${trunc(format_px[0]/2)} ${trunc(format_px[1]/2)}) translate(${-width/2} ${-height/2})">\n`;
+    if (SVG_ADD_FRAME) {
+        xml += `    <rect id="frame" x="0" y="0" width="${width}" height="${height}"/>\n`;
+    }
+    
+    // connections
+    xml += `    <g id="connections">\n`;
+    const nodes = state.nodes;
+    for (let [i, conn] of state.connections.entries()) {
+        for (let j of conn) {
+            if (USE_BEZIER) {
+                const b = pipe_h(...nodes[i], ...nodes[j]).map(trunc);
+                xml += `      <path d="M ${b[0]} ${b[1]} C ${b[2]} ${b[3]} ${b[4]} ${b[5]} ${b[6]} ${b[7]}"/>\n`;
+            } else {
+                const l = [...nodes[i], ...nodes[j]].map(trunc);
+                xml += `      <path d="M ${l[0]} ${l[1]} L ${l[2]} ${l[3]}"/>\n`;
+            }
+        }
+    }
+    xml += `    </g>\n`;
+    
+    // nodes
+    xml += `    <g id="nodes" stroke="none" fill="black">\n`;
+    for (let [i, n] of state.nodes.entries()) {
+        const l = state.node_letters[i]; // letter
+        n = n.map(trunc);
+        xml += '      ' + letter_path(l, n);
+    }
+    xml += `    </g>\n`;
+    
+    // M and K
+    xml += `    <g id="m_and_k" stroke="none" fill="black">\n`;
+    xml += '      ' + letter_path('M', state.pos_m);
+    xml += '      ' + letter_path('K', state.pos_k);
+    xml += `    </g>\n`;
+    
+    xml += '  </g>\n';
+    xml += '</svg>\n';
+    return xml;
 }
 
 function nextSeed(d = 1) {
@@ -568,7 +636,7 @@ document.addEventListener('keydown', e => {
     } else if (e.key == 's') { // s .. save frame
         // util.save_canvas( params );
         const ts = save_svg();
-        saveCanvas(ts + '.png');
+        // saveCanvas(ts + '.png');
     } else if (e.key == 'h' || e.key == 'Tab') { // h or Tab .. toggle gui
         gui.toggle();
         e.preventDefault();
