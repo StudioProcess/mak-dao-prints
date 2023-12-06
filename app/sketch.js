@@ -49,16 +49,23 @@ const SVG_DPI = 600 / 7; // determines printed size (e.g map height of 600 to 7i
 
 // Variables
 let gui;
-let img_d, img_dm, img_o, img_m, img_k, img_logo;
+let img_logo;
+let letters_img = [];
+let letters_svg = [];
 let beziers = [];
 let state; // state describing the drawing
 
+function load_letter(letter, suffix = '.png', prefix = '../img/png/') {
+    const path = prefix + letter + suffix;
+    // console.log(`Loading ${letter}: ${path}`)
+    return loadImage(path);
+}
+
 function preload() {
-    img_d = loadImage('../img/png/D.png');
-    img_dm = loadImage('../img/png/ꓷ.png');
-    img_o = loadImage('../img/png/O.png');
-    img_m = loadImage('../img/png/M.png');
-    img_k = loadImage('../img/png/K.png');
+    for (let letter of ['D', 'ꓷ', 'O', 'M', 'K']) {
+        letters_img[letter] = load_letter(letter);
+        letters_svg[letter] = load_letter(letter, '.svg', '../img/svg/')
+    }
     img_logo = loadImage('../img/logo_emboss.png');
 }
 
@@ -311,9 +318,11 @@ function generate() {
         const excl_m = [pos_m[0] - M_AND_K_EXCL / 2, pos_m[1] - M_AND_K_EXCL / 2, M_AND_K_EXCL, M_AND_K_EXCL];
         const excl_k = [pos_k[0] - M_AND_K_EXCL / 2, pos_k[1] - M_AND_K_EXCL / 2, M_AND_K_EXCL, M_AND_K_EXCL];
         excl_boxes = [excl_m, excl_k];
+        state.excl_boxes = excl_boxes;
     }
     state.pos_m = pos_m;
     state.pos_k = pos_k;
+    // state.extra_letters = [ {letter: 'M', pos: pos_m}, {letter: 'K', pos: pos_k} ];
 
     // compute random nodes
     const nodes = [];
@@ -321,6 +330,18 @@ function generate() {
         nodes.push(get_random_pos(nodes, [], excl_boxes));
     }
     state.nodes = nodes;
+    
+    // random letter per node
+    const node_letters = [];
+    for (let i = 0; i < NUM_NODES; i++) {
+        let letter;
+        if (random() < 0.5) {
+            if (random() < 0.5) { letter = "ꓷ"; } else { letter = "D"; }
+        } else { letter = "O"; }
+        node_letters.push(letter);
+    }
+    state.node_letters = node_letters;
+
 
     // compute distance matrix
     const distances = [];
@@ -447,11 +468,8 @@ function draw_p5(state) {
         noStroke();
         for (let [i, n] of nodes.entries()) {
             if (USE_LETTERS) {
-                let img;
-                if (random() < 0.5) {
-                    if (random() < 0.5) { img = img_dm; } else { img = img_d; }
-                } else { img = img_o; }
-    
+                const letter = state.node_letters[i];
+                const img = letters_img[letter];
                 if (USE_NODE_BACKDROP) {
                     noStroke();
                     fill(BG);
@@ -479,10 +497,13 @@ function draw_p5(state) {
         }
     }
     
-    // draw M and k
-    if (SHOW_M_AND_K && USE_LETTERS) {    
-        image(img_m, ...state.pos_m, NODE_SIZE, NODE_SIZE);
-        image(img_k, ...state.pos_k, NODE_SIZE, NODE_SIZE);
+    // draw M and K (extra letters)
+    if (SHOW_M_AND_K && USE_LETTERS) {
+        image(letters_img['M'], ...state.pos_m, NODE_SIZE, NODE_SIZE);
+        image(letters_img['K'], ...state.pos_k, NODE_SIZE, NODE_SIZE);
+        // for (let {letter, pos} of state.extra_letters) {
+        //     image(letters_img[letter], ...pos, NODE_SIZE, NODE_SIZE);
+        // }
     }
     
     // draw logo
