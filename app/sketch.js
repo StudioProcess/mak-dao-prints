@@ -50,26 +50,39 @@ const SVG_DPI = 600 / 7; // determines printed size (e.g map height of 600 to 7i
 // Variables
 let gui;
 let img_logo;
-let letters_img = [];
-let letters_svg = [];
+let letters_img = {};
+let letters_svg = {};
 let beziers = [];
 let state; // state describing the drawing
 
-function load_letter(letter, suffix = '.png', prefix = '../img/png/') {
+function load_letter_img(letter, cb, suffix = '.png', prefix = '../img/png/') {
     const path = prefix + letter + suffix;
-    // console.log(`Loading ${letter}: ${path}`)
-    return loadImage(path);
+    // console.log(`Loading (PNG) ${letter}: ${path}`);
+    return loadImage(path, cb);
+}
+
+function load_letter_svg(letter, cb, suffix = '.svg', prefix = '../img/svg/') {
+    const path = prefix + letter + suffix;
+    // console.log(`Loading (SVG) ${letter}: ${path}`);
+    return loadStrings(path, cb);
 }
 
 function preload() {
     for (let letter of ['D', 'ꓷ', 'O', 'M', 'K']) {
-        letters_img[letter] = load_letter(letter);
-        letters_svg[letter] = load_letter(letter, '.svg', '../img/svg/')
+        letters_img[letter] = load_letter_img(letter);
+        load_letter_svg(letter, (strings) => {
+            const text = strings.join('\n');
+            const template = document.createElement('template');
+            template.innerHTML = text;
+            letters_svg[letter] = template.content.firstElementChild;
+        });
     }
     img_logo = loadImage('../img/logo_emboss.png');
 }
 
 function setup() {
+    
+    // console.log( letters_svg['D'].querySelector('path').getAttribute('d') );
     createCanvas(...get_size(config.FORMAT, config.MAX_W, config.MAX_H));
     pixelDensity(config.PIXEL_DENSITY);
     frameRate(config.FPS);
@@ -283,7 +296,7 @@ function mm2px(mm, dpi = SVG_DPI) {
 function save_svg() {
     const timestamp = new Date().toISOString();
     const format_px = [mm2px(SVG_FORMAT[0]), mm2px(SVG_FORMAT[1])];
-    console.log(format_px);
+    // console.log(format_px);
     let xml = `<svg version="1.1" xmlns="http://www.w3.org/2000/svg" width="${SVG_FORMAT[0]}mm" height="${SVG_FORMAT[1]}mm" viewBox="0 0 ${format_px[0]} ${format_px[1]}" stroke="black" fill="none" stroke-linecap="round" stroke-width="${STROKE_WEIGHT}">\n`;
     // const tl = [ mm2px(SVG_FORMAT[0])/2 - width/2, mm2px(SVG_FORMAT[1])/2 - height/2 ];
     //translate(${tl[0]} ${tl[1]})
