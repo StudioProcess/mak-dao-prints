@@ -7,7 +7,8 @@ const config = {
 };
 
 const params = {
-    seed: [10, 0, undefined, 1]
+    seed: [10, 0, undefined, 1],
+    show_svg: true,
 };
 
 export { config, params };

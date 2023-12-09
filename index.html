@@ -14,13 +14,14 @@
         body {
             background-color: #333;
         }
-        main {
+        main, #svg_container {
             display: flex;
             align-items: center;
             justify-content: center;
             width: 100vw;
             height: 100vh;
             padding: 2.5vh;
+            position: absolute;
         }
         .p5Canvas {
             /* outline: 1px solid #666; */
@@ -31,11 +32,18 @@
             height: 100% !important;
             transform: translate3d(0,0,0);
         }
+        
+        #svg_container svg {
+           width: auto;
+           height: 100%;
+           background-color: #fff;
+        }
     </style>
 </head>
     
 <body>
     <main></main>
+    <div id="svg_container"></div>
     
     <script src="./node_modules/p5/lib/p5.min.js"></script>
     <script src="./node_modules/paper/dist/paper-core.min.js"></script>

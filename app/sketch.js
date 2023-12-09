@@ -55,6 +55,7 @@ let letters_img = {};
 let letters_svg = {};
 let letters_mask = {};
 let state; // state describing the drawing
+let svg_container;
 
 function load_letter_img(letter, cb, suffix = '.png', prefix = '../img/png/') {
     const path = prefix + letter + suffix;
@@ -68,20 +69,20 @@ function load_letter_svg(letter, cb, suffix = '.svg', prefix = '../img/svg/') {
     return loadStrings(path, cb);
 }
 
+function svg_element(svg_text) {
+    const template = document.createElement('template');
+    template.innerHTML = svg_text;
+    return template.content.firstElementChild;
+}
+
 function preload() {
     for (let letter of ['D', 'ꓷ', 'O', 'M', 'K']) {
         letters_img[letter] = load_letter_img(letter);
         load_letter_svg(letter, (strings) => {
-            const text = strings.join('\n');
-            const template = document.createElement('template');
-            template.innerHTML = text;
-            letters_svg[letter] = template.content.firstElementChild;
+            letters_svg[letter] = svg_element( strings.join('\n') );
         });
         load_letter_svg(letter, (strings) => {
-            const text = strings.join('\n');
-            const template = document.createElement('template');
-            template.innerHTML = text;
-            letters_mask[letter] = template.content.firstElementChild;
+            letters_mask[letter] = svg_element( strings.join('\n') );
         }, ' Mask.svg');
     }
     img_logo = loadImage('../img/logo_emboss.png');
@@ -102,12 +103,19 @@ function setup() {
     noLoop();
     
     gui.get('seed').onChange(() => { redraw(); });
+    
+    svg_container = document.querySelector("#svg_container");
+    gui.get('show_svg').onChange(shown => { svg_container.style.display = shown ? 'flex' : 'none'; });
 }
 
 function draw() {
     state = generate();
     draw_p5(state);
     console.log(state);
+    
+    // show svg
+    const svg = draw_svg(state);
+    svg_container.replaceChildren(svg_element(svg));
 }
 
 // Get format according to ascpect ratio and maximum width/height
@@ -653,6 +661,7 @@ document.addEventListener('keydown', e => {
         randomizeSeed();
     } else if (e.key == 'ArrowRight' || e.key == ' ') {
         nextSeed(1);
+        e.preventDefault();
     } else if (e.key == 'ArrowLeft') {
         nextSeed(-1);
     }
