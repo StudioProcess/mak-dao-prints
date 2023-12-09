@@ -9,6 +9,8 @@ const config = {
 const params = {
     seed: [10, 0, undefined, 1],
     show_svg: true,
+    svg_hatch_spacing: [2, 0.1, undefined, 0.1],
+    svg_hatch_direction: [-45, -180, 180, 1],
 };
 
 export { config, params };

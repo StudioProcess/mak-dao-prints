@@ -105,7 +105,14 @@ function setup() {
     gui.get('seed').onChange(() => { redraw(); });
     
     svg_container = document.querySelector("#svg_container");
-    gui.get('show_svg').onChange(shown => { svg_container.style.display = shown ? 'flex' : 'none'; });
+    gui.get('show_svg').onFinishChange(shown => { svg_container.style.display = shown ? 'flex' : 'none'; });
+    gui.get('svg_hatch_spacing').onFinishChange(redraw);
+    gui.get('svg_hatch_direction').onFinishChange(redraw);
+}
+
+function update_svg() {
+    const svg = draw_svg(state);
+    svg_container.replaceChildren(svg_element(svg));
 }
 
 function draw() {
@@ -114,8 +121,7 @@ function draw() {
     console.log(state);
     
     // show svg
-    const svg = draw_svg(state);
-    svg_container.replaceChildren(svg_element(svg));
+    update_svg();
 }
 
 // Get format according to ascpect ratio and maximum width/height
@@ -647,11 +653,11 @@ function draw_svg(state, precision = 2) {
     xml += `    <g id="hatching" stroke="black" fill="none">\n`;
     for (let [i, node] of nodes.entries()) {
         const letter = letter_path(state.node_letters[i], node, precision, false, true); 
-        const path = pt.hatch( letter, 2, -45, true );
+        const path = pt.hatch( letter, params.svg_hatch_spacing, params.svg_hatch_direction, true );
         xml += `       <path d="${path}"/>`;
     }
-    const hatch_m = pt.hatch( letter_m, 2, -45, true );
-    const hatch_k = pt.hatch( letter_k, 2, -45, true );
+    const hatch_m = pt.hatch( letter_m, params.svg_hatch_spacing, params.svg_hatch_direction, true );
+    const hatch_k = pt.hatch( letter_k, params.svg_hatch_spacing, params.svg_hatch_direction, true );
     xml += `       <path d="${hatch_m}"/>\n`;
     xml += `       <path d="${hatch_k}"/>\n`;
     xml += `    </g>\n`;
