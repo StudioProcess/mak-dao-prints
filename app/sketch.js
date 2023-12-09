@@ -632,9 +632,24 @@ function draw_svg(state, precision = 2) {
     xml += `    </g>\n`;
     
     // M and K
-    xml += `    <g id="m_and_k" stroke="none" fill="black">\n`;
-    xml += '      ' + letter_path('M', state.pos_m);
-    xml += '      ' + letter_path('K', state.pos_k);
+    const letter_m = letter_path('M', state.pos_m);
+    const letter_k = letter_path('K', state.pos_k);
+    xml += `    <g id="m_and_k" stroke="black" fill="none">\n`;
+    xml += '      ' + letter_m + '\n';
+    xml += '      ' + letter_k + '\n';;
+    xml += `    </g>\n`;
+    
+    // Fill hatching (for nodes, m and k)
+    xml += `    <g id="hatching" stroke="black" fill="none">\n`;
+    for (let [i, node] of nodes.entries()) {
+        const letter = letter_path(state.node_letters[i], node, precision, false, true); 
+        const path = pt.hatch( letter, 2, -45, true );
+        xml += `       <path d="${path}"/>`;
+    }
+    const hatch_m = pt.hatch( letter_m, 2, -45, true );
+    const hatch_k = pt.hatch( letter_k, 2, -45, true );
+    xml += `       <path d="${hatch_m}"/>\n`;
+    xml += `       <path d="${hatch_k}"/>\n`;
     xml += `    </g>\n`;
     
     xml += '  </g>\n';

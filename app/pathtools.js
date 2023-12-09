@@ -130,4 +130,70 @@ function clip_multiple(ds, clip_d) {
     return out;
 }
 
-export { parse_path, join_path, matrix, transform_path, clip, clip_multiple };
+function hatch_pattern(bbox, spacing, angle) {
+    let lines = [];
+
+    function transform_line(line, matrix) {
+        const p1 = matrix.transformPoint(new DOMPoint(line[0], line[1]));
+        const p2 = matrix.transformPoint(new DOMPoint(line[2], line[3]));
+        return [p1.x, p1.y, p2.x, p2.y];
+    }
+
+    // side length of patterns
+    const a = Math.sqrt(bbox[2] ** 2 + bbox[3] ** 2);
+    // console.log(a);
+
+    // center of pattern
+    const cx = bbox[0] + bbox[2] / 2;
+    const cy = bbox[1] + bbox[3] / 2;
+
+    // center line
+    lines.push([cx - a / 2, cy, cx + a / 2, cy]);
+    // work outwards
+    let r = spacing;
+    while (r < a / 2) {
+        lines.push([cx - a / 2, cy + r, cx + a / 2, cy + r]);
+        lines.push([cx - a / 2, cy - r, cx + a / 2, cy - r]);
+        r += spacing;
+    }
+
+    // apply rotation
+    const m = new DOMMatrix(); // identity
+    m.translateSelf(cx, cy).rotateSelf(angle).translateSelf(-cx, -cy);
+    lines = lines.map(l => transform_line(l, m));
+    return lines;
+}
+
+function line_to_path(l, decimals = null) {
+    const trim = limit_decimals(decimals);
+    return `M ${trim(l[0])},${trim(l[1])} L${trim(l[2])},${trim(l[3])}`.trim();
+}
+
+function lines_to_path(lines, decimals = null) {
+    return lines.map(x => line_to_path(x, decimals)).join(' ');
+}
+
+// Returns array of lines [x1, y1, x2, y2]
+function hatch(d, spacing, angle, return_path = false, decimals = null) {
+    const p = new paper.CompoundPath(d);
+    const bbox = [p.bounds.x, p.bounds.y, p.bounds.width, p.bounds.height];
+
+    const lines = hatch_pattern(bbox, spacing, angle);
+    const out = [];
+    for (let l of lines) {
+        const pline = new paper.Path.Line(...l)
+        const inter = pline.getCrossings(p);
+        for (let i = 1; i < inter.length; i += 2) {
+            const a = inter[i - 1];
+            const b = inter[i];
+            out.push([a.point.x, a.point.y, b.point.x, b.point.y]);
+        }
+    }
+    if (return_path) {
+        return lines_to_path(out, decimals);
+    }
+    return out;
+}
+
+
+export { parse_path, join_path, matrix, transform_path, clip, clip_multiple, hatch };
