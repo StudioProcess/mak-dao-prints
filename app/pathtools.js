@@ -130,6 +130,10 @@ function clip_multiple(ds, clip_d) {
     return out;
 }
 
+function flip_line(line) {
+    return [ line[2], line[3], line[0], line[1] ];
+}
+
 function hatch_pattern(bbox, spacing, angle) {
     let lines = [];
 
@@ -151,10 +155,18 @@ function hatch_pattern(bbox, spacing, angle) {
     lines.push([cx - a / 2, cy, cx + a / 2, cy]);
     // work outwards
     let r = spacing;
+    let flip = true;
     while (r < a / 2) {
-        lines.push([cx - a / 2, cy + r, cx + a / 2, cy + r]);
-        lines.push([cx - a / 2, cy - r, cx + a / 2, cy - r]);
+        let front = [cx - a / 2, cy - r, cx + a / 2, cy - r];
+        let back  = [cx - a / 2, cy + r, cx + a / 2, cy + r];
+        if (flip) {
+            front = flip_line(front);
+            back  = flip_line(back);
+        }
+        lines.unshift(front); // add to front of list
+        lines.push(back); // add to end of list
         r += spacing;
+        flip = !flip;
     }
 
     // apply rotation
