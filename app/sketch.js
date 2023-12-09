@@ -203,10 +203,10 @@ function get_random_pos(nodes = [], box = [], excl_boxes = []) {
 }
 
 // find connection that has its middle point nearest to (x,y)
-function connection_near(x, y, connections, nodes) {
+function connection_near(x, y, connection_matrix, nodes) {
     let min_dist = Infinity;
     let conn = null;
-    for (let [i, connected] of connections.entries()) {
+    for (let [i, connected] of connection_matrix.entries()) {
         for (let j of connected) {
             const a = nodes[i];
             const b = nodes[j];
@@ -328,7 +328,6 @@ function mm2px(mm, dpi = SVG_DPI) {
 function save_svg() {
     const timestamp = new Date().toISOString();
     const text = draw_svg(state);
-    console.log(text);
     save_text(text, timestamp + '.svg', 'image/svg+xml');
     return timestamp;
 }
@@ -418,9 +417,10 @@ function generate() {
     // console.log(nearest);
 
     // compute connection matrix
+    const connection_matrix = [];
     const connections = [];
     for (let i = 0; i < NUM_NODES; i++) {
-        connections.push([]);
+        connection_matrix.push([]);
     }
     for (let i = 0; i < NUM_NODES; i++) {
         let next = 1;
@@ -431,31 +431,33 @@ function generate() {
             next = step;
         }
         const connect_target = random(CONNECT_MIN, CONNECT_MAX);
-        while (connections[i].length < connect_target && next < NUM_NODES) {
+        while (connection_matrix[i].length < connect_target && next < NUM_NODES) {
             // add connection to nearest unconnected node that can take another connection
             let j = nearest[i][next];
-            if (!connections[i].includes(j) &&
-                !connections[j].includes(i) &&
-                connections[j].length < CONNECT_MAX) {
-                connections[i].push(j);
-                connections[j].push(i);
+            if (!connection_matrix[i].includes(j) &&
+                !connection_matrix[j].includes(i) &&
+                connection_matrix[j].length < CONNECT_MAX) {
+                connection_matrix[i].push(j);
+                connection_matrix[j].push(i);
+                connections.push([i, j]);
             }
             next += 1;
         }
     }
+    state.connection_matrix = connection_matrix;
     state.connections = connections;
 
     // compute bifurcation
     state.bifurcation = null;
     if (ADD_BEZIER_BI) {
         // find two connected nodes nearest to center
-        let conn = connection_near(width / 2, height / 2, connections, nodes);
+        let conn = connection_near(width / 2, height / 2, connection_matrix, nodes);
         if (conn !== null) {
             // find nearby node that's not connected
             const near = node_near(width / 2, height / 2, nodes);
             let n = null;
             for (let i of near) {
-                if (!connections[conn[0]].includes(i) && !connections[conn[1]].includes(i)) {
+                if (!connection_matrix[conn[0]].includes(i) && !connection_matrix[conn[1]].includes(i)) {
                     n = i;
                     break;
                 }
@@ -481,13 +483,11 @@ function draw_p5(state) {
     stroke(0);
     strokeWeight(STROKE_WEIGHT);
     const nodes = state.nodes;
-    for (let [i, conn] of state.connections.entries()) {
-        for (let j of conn) {
-            if (USE_BEZIER) {
-                bezier( ...pipe_h(...nodes[i], ...nodes[j]) );
-            } else {
-                line(...nodes[i], ...nodes[j]);
-            }
+    for (let [i, j] of state.connections) {
+        if (USE_BEZIER) {
+            bezier( ...pipe_h(...nodes[i], ...nodes[j]) );
+        } else {
+            line(...nodes[i], ...nodes[j]);
         }
     }
     
@@ -597,15 +597,14 @@ function draw_svg(state, precision = 2) {
     // connections
     xml += `    <g id="connections">\n`;
     const nodes = state.nodes;
-    for (let [i, conn] of state.connections.entries()) {
-        for (let j of conn) {
-            if (USE_BEZIER) {
-                const b = pipe_h(...nodes[i], ...nodes[j]).map(trunc);
-                xml += `      <path d="M ${b[0]} ${b[1]} C ${b[2]} ${b[3]} ${b[4]} ${b[5]} ${b[6]} ${b[7]}"/>\n`;
-            } else {
-                const l = [...nodes[i], ...nodes[j]].map(trunc);
-                xml += `      <path d="M ${l[0]} ${l[1]} L ${l[2]} ${l[3]}"/>\n`;
-            }
+    const drawn = [];
+    for (let [i, j] of state.connections) {
+        if (USE_BEZIER) {
+            const b = pipe_h(...nodes[i], ...nodes[j]).map(trunc);
+            xml += `      <path d="M ${b[0]} ${b[1]} C ${b[2]} ${b[3]} ${b[4]} ${b[5]} ${b[6]} ${b[7]}"/>\n`;
+        } else {
+            const l = [...nodes[i], ...nodes[j]].map(trunc);
+            xml += `      <path d="M ${l[0]} ${l[1]} L ${l[2]} ${l[3]}"/>\n`;
         }
     }
     xml += `    </g>\n`;
