@@ -44,10 +44,6 @@ const BEZIER_BI_POINT = 40;
 const BEZIER_BI_CONTROL = 50;
 const SHOW_BI_POINT = false;
 
-const SVG_ADD_FRAME = true;
-const SVG_FORMAT = [297, 420];
-const SVG_DPI = 600 / 7; // determines printed size (e.g map height of 600 to 7in -> 600/7)
-
 // Variables
 let gui;
 let img_logo;
@@ -110,18 +106,14 @@ function setup() {
     gui.get('svg_hatch_direction').onFinishChange(redraw);
 }
 
-function update_svg() {
-    const svg = draw_svg(state);
-    svg_container.replaceChildren(svg_element(svg));
-}
-
 function draw() {
     state = generate();
     draw_p5(state);
     console.log(state);
     
     // show svg
-    update_svg();
+    const svg = draw_svg(state, config.SVG_PRECISION);
+    svg_container.replaceChildren(svg_element(svg));
 }
 
 // Get format according to ascpect ratio and maximum width/height
@@ -306,34 +298,13 @@ function save_text(text, filename, charset = 'text/plain') {
     document.body.removeChild(link); // Firefox
 }
 
-function mm2px(mm, dpi = SVG_DPI) {
+function mm2px(mm, dpi = config.SVG_DPI) {
     return mm / 25.4 * dpi;
 }
 
-// function save_svg() {
-//     const timestamp = new Date().toISOString();
-//     const format_px = [mm2px(SVG_FORMAT[0]), mm2px(SVG_FORMAT[1])];
-//     // console.log(format_px);
-//     let xml = `<svg version="1.1" xmlns="http://www.w3.org/2000/svg" width="${SVG_FORMAT[0]}mm" height="${SVG_FORMAT[1]}mm" viewBox="0 0 ${format_px[0]} ${format_px[1]}" stroke="black" fill="none" stroke-linecap="round" stroke-width="${STROKE_WEIGHT}">\n`;
-//     // const tl = [ mm2px(SVG_FORMAT[0])/2 - width/2, mm2px(SVG_FORMAT[1])/2 - height/2 ];
-//     //translate(${tl[0]} ${tl[1]})
-//     // xml += `  <g transform="translate(${SVG_FORMAT[0]/2}mm ${SVG_FORMAT[1]/2}mm) scale(1.5) translate(${-width/2} ${-height/2})">\n`;
-//     xml += `  <g transform="translate(${format_px[0]/2} ${format_px[1]/2}) translate(${-width/2} ${-height/2})">\n`;
-//     if (SVG_ADD_FRAME) {
-//         xml += `    <rect x="0" y="0" width="${width}" height="${height}" />\n`;
-//     }
-//     for (let b of beziers) {
-//         xml += `    <path d="M ${b[0]} ${b[1]} C ${b[2]} ${b[3]} ${b[4]} ${b[5]} ${b[6]} ${b[7]}"/>\n`;
-//     }
-//     xml += '  </g>\n';
-//     xml += '</svg>\n';
-//     save_text(xml, timestamp + '.svg', 'image/svg+xml');
-//     return timestamp;
-// }
-
 function save_svg() {
     const timestamp = new Date().toISOString();
-    const text = draw_svg(state);
+    const text = draw_svg(state, config.SVG_PRECISION, true); // flag for export
     save_text(text, timestamp + '.svg', 'image/svg+xml');
     return timestamp;
 }
@@ -594,16 +565,23 @@ function letter_path(letter, pos, decimals = 2, mask = false, data_only = false)
     // return `<path transform="translate(${pos[0]} ${pos[1]}) scale(${NODE_SIZE/100}) translate(-50 -50)" vector-effect="non-scaling-stroke" d="${d}"/>\n`;
 }
 
-function draw_svg(state, precision = 2) {
-    const format_px = [mm2px(SVG_FORMAT[0]), mm2px(SVG_FORMAT[1])];
+function draw_svg(state, precision = 2, format_for_export = false) {
+    const size = format_for_export ? [config.SVG_FORMAT[0] + 'mm', config.SVG_FORMAT[1] + 'mm'] : [width, height];
+    const format_px = format_for_export ? [mm2px(config.SVG_FORMAT[0]), mm2px(config.SVG_FORMAT[1])] : [width, height];
     const trunc = decimals(precision);
     
     // console.log(format_px);
-    let xml = `<svg version="1.1" xmlns="http://www.w3.org/2000/svg" width="${SVG_FORMAT[0]}mm" height="${SVG_FORMAT[1]}mm" viewBox="0 0 ${format_px[0]} ${format_px[1]}" stroke="black" fill="none" stroke-linecap="round" stroke-width="${STROKE_WEIGHT}">\n`;
-    xml += `  <g transform="translate(${trunc(format_px[0]/2)} ${trunc(format_px[1]/2)}) translate(${-width/2} ${-height/2})">\n`;
-    if (SVG_ADD_FRAME) {
-        xml += `    <rect id="frame" x="0" y="0" width="${width}" height="${height}"/>\n`;
+    let xml = `<svg version="1.1" xmlns="http://www.w3.org/2000/svg" width="${size[0]}" height="${size[1]}" viewBox="0 0 ${format_px[0]} ${format_px[1]}" stroke="black" fill="none" stroke-linecap="round" stroke-width="${STROKE_WEIGHT}">\n`;
+    
+    if (format_for_export) {
+        xml += `  <g transform="translate(${trunc(format_px[0]/2)} ${trunc(format_px[1]/2)}) translate(${-width/2} ${-height/2})">\n`;
+        if (config.SVG_ADD_FRAME) {
+            xml += `    <rect id="frame" x="0" y="0" width="${width}" height="${height}"/>\n`;
+        }
+    } else {
+       xml += `  <g>\n`;
     }
+
     
     // connections
     xml += `    <g id="connections">\n`;
