@@ -610,23 +610,6 @@ function draw_svg(state, precision = 2, format_for_export = false) {
     }
     xml += `    </g>\n`;
     
-    // nodes
-    xml += `    <g id="nodes" stroke="black" fill="none">\n`;
-    for (let [i, n] of state.nodes.entries()) {
-        const l = state.node_letters[i]; // letter
-        n = n.map(trunc);
-        xml += '      ' + letter_path(l, n);
-    }
-    xml += `    </g>\n`;
-    
-    // M and K
-    const letter_m = letter_path('M', state.pos_m);
-    const letter_k = letter_path('K', state.pos_k);
-    xml += `    <g id="m_and_k" stroke="black" fill="none">\n`;
-    xml += '      ' + letter_m + '\n';
-    xml += '      ' + letter_k + '\n';;
-    xml += `    </g>\n`;
-    
     // Fill hatching (for nodes, m and k)
     xml += `    <g id="hatching" stroke="black" fill="none">\n`;
     for (let [i, node] of nodes.entries()) {
@@ -634,10 +617,24 @@ function draw_svg(state, precision = 2, format_for_export = false) {
         const path = pt.hatch( letter, params.svg_hatch_spacing, params.svg_hatch_direction, true );
         xml += `       <path d="${path}"/>`;
     }
+    const letter_m = letter_path('M', state.pos_m);
+    const letter_k = letter_path('K', state.pos_k);
     const hatch_m = pt.hatch( letter_m, params.svg_hatch_spacing, params.svg_hatch_direction, true );
     const hatch_k = pt.hatch( letter_k, params.svg_hatch_spacing, params.svg_hatch_direction, true );
     xml += `       <path d="${hatch_m}"/>\n`;
     xml += `       <path d="${hatch_k}"/>\n`;
+    xml += `    </g>\n`;
+    
+    // letters
+    xml += `    <g id="letters" stroke="black" fill="none">\n`;
+    for (let [i, n] of state.nodes.entries()) {
+        const l = state.node_letters[i]; // letter
+        n = n.map(trunc);
+        xml += '      ' + letter_path(l, n);
+    }
+    // M and K (part of nodes)
+    xml += '      ' + letter_m + '\n';
+    xml += '      ' + letter_k + '\n';;
     xml += `    </g>\n`;
     
     xml += '  </g>\n';
