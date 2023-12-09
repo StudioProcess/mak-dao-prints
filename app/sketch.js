@@ -574,10 +574,15 @@ function letter_svg_data(letter) {
     return letters_svg[letter].querySelector('path').getAttribute('d');
 }
 
-function letter_path(letter, pos, decimals = 2) {
+function mask_svg_data(letter) {
+    return letters_mask[letter].querySelector('path').getAttribute('d');
+}
+
+function letter_path(letter, pos, decimals = 2, mask = false, data_only = false) {
     const m = pt.matrix().translate(...pos).scale(NODE_SIZE/100).translate(-50, -50);
-    let d = letter_svg_data(letter);
+    let d = mask ? mask_svg_data(letter) : letter_svg_data(letter)
     d = pt.transform_path(d, m, decimals);
+    if (data_only) { return d; }
     return `<path d="${d}"/>\n`;
     
     // return `<path transform="translate(${pos[0]} ${pos[1]}) scale(${NODE_SIZE/100}) translate(-50 -50)" vector-effect="non-scaling-stroke" d="${d}"/>\n`;
@@ -600,8 +605,16 @@ function draw_svg(state, precision = 2) {
     const drawn = [];
     for (let [i, j] of state.connections) {
         if (USE_BEZIER) {
-            const b = pipe_h(...nodes[i], ...nodes[j]).map(trunc);
-            xml += `      <path d="M ${b[0]} ${b[1]} C ${b[2]} ${b[3]} ${b[4]} ${b[5]} ${b[6]} ${b[7]}"/>\n`;
+            const b = pipe_h(...nodes[i], ...nodes[j]).map(trunc); // unclipped connection between nodes i and j
+            let paths = [ `M ${b[0]} ${b[1]} C ${b[2]} ${b[3]} ${b[4]} ${b[5]} ${b[6]} ${b[7]}` ]; // path for the connection
+            const letter_i = letter_path( state.node_letters[i], nodes[i], precision, true, true); // letter path for node i
+            const letter_j = letter_path( state.node_letters[j], nodes[j], precision, true, true); // letter path for node j
+            paths = pt.clip_multiple(paths, letter_i);
+            paths = pt.clip_multiple(paths, letter_j);
+            for (let path of paths) {
+                xml += `      <path d="${path}"/>\n`;
+            }
+            // break;
         } else {
             const l = [...nodes[i], ...nodes[j]].map(trunc);
             xml += `      <path d="M ${l[0]} ${l[1]} L ${l[2]} ${l[3]}"/>\n`;
@@ -610,7 +623,7 @@ function draw_svg(state, precision = 2) {
     xml += `    </g>\n`;
     
     // nodes
-    xml += `    <g id="nodes" stroke="none" fill="black">\n`;
+    xml += `    <g id="nodes" stroke="black" fill="none">\n`;
     for (let [i, n] of state.nodes.entries()) {
         const l = state.node_letters[i]; // letter
         n = n.map(trunc);

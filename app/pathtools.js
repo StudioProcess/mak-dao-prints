@@ -87,4 +87,47 @@ function transform_path(d, matrix, decimals = null) {
     return join_path(t, decimals);
 }
 
-export { parse_path, join_path, matrix, transform_path };
+// Return d clipped by clip_d. Returns an array of path data strings.
+// Supports only single open paths for d.
+// Requires paper.js in global scope.
+function clip(d, clip_d) {
+    let p = new paper.Path(d);
+    const clip = new paper.CompoundPath(clip_d);
+
+    // no intersection
+    if (!p.intersects(clip)) {
+        // inside or outside?
+        if (p.isInside(clip.bounds)) {
+            // console.log('inside');
+            return [];
+        } else {
+            // console.log('outside');
+            return [d];
+        }
+    }
+    const out = [];
+    const first_loc = p.getLocationAt(0);
+    const last_loc = p.getLocationAt(p.length);
+    const stops = [first_loc, ...p.getCrossings(clip), last_loc];
+    let inside = clip.contains(first_loc.point);
+    for (let i = 1; i < stops.length; i++) {
+        const rest = p.splitAt(stops[i]); // p is now shorter
+        if (!inside) {
+            out.push(p.pathData);
+        }
+        p = rest;
+        inside = !inside;
+    }
+    return out;
+}
+
+function clip_multiple(ds, clip_d) {
+    const out = [];
+    for (let d of ds) {
+        const clipped = clip(d, clip_d);
+        out.push(...clipped);
+    }
+    return out;
+}
+
+export { parse_path, join_path, matrix, transform_path, clip, clip_multiple };
