@@ -602,7 +602,8 @@ function draw_svg(state, precision = 2) {
     // connections
     xml += `    <g id="connections">\n`;
     const nodes = state.nodes;
-    const drawn = [];
+    const mask_m = letter_path('M', state.pos_m, precision, true, true);
+    const mask_k = letter_path('K', state.pos_k, precision, true, true);
     for (let [i, j] of state.connections) {
         if (USE_BEZIER) {
             const b = pipe_h(...nodes[i], ...nodes[j]).map(trunc); // unclipped connection between nodes i and j
@@ -612,6 +613,9 @@ function draw_svg(state, precision = 2) {
                 const letter = letter_path( state.node_letters[i], node, precision, true, true); // letter mask path for node
                 paths = pt.clip_multiple(paths, letter);
             }
+            // clip against m and k
+            paths = pt.clip_multiple(paths, mask_m);
+            paths = pt.clip_multiple(paths, mask_k);
             for (let path of paths) {
                 xml += `      <path d="${path}"/>\n`;
             }
