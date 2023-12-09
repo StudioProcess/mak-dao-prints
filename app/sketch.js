@@ -607,14 +607,14 @@ function draw_svg(state, precision = 2) {
         if (USE_BEZIER) {
             const b = pipe_h(...nodes[i], ...nodes[j]).map(trunc); // unclipped connection between nodes i and j
             let paths = [ `M ${b[0]} ${b[1]} C ${b[2]} ${b[3]} ${b[4]} ${b[5]} ${b[6]} ${b[7]}` ]; // path for the connection
-            const letter_i = letter_path( state.node_letters[i], nodes[i], precision, true, true); // letter path for node i
-            const letter_j = letter_path( state.node_letters[j], nodes[j], precision, true, true); // letter path for node j
-            paths = pt.clip_multiple(paths, letter_i);
-            paths = pt.clip_multiple(paths, letter_j);
+            // clip against *all* nodes (to clip overlaps as well)
+            for (let [i, node] of nodes.entries()) {
+                const letter = letter_path( state.node_letters[i], node, precision, true, true); // letter mask path for node
+                paths = pt.clip_multiple(paths, letter);
+            }
             for (let path of paths) {
                 xml += `      <path d="${path}"/>\n`;
             }
-            // break;
         } else {
             const l = [...nodes[i], ...nodes[j]].map(trunc);
             xml += `      <path d="M ${l[0]} ${l[1]} L ${l[2]} ${l[3]}"/>\n`;
