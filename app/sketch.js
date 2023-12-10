@@ -88,30 +88,29 @@ function setup() {
     createCanvas(...get_size(config.FORMAT, config.MAX_W, config.MAX_H));
     pixelDensity(config.PIXEL_DENSITY);
     frameRate(config.FPS);
+    noLoop();
 
     paper.setup();
 
+    // GUI
     gui = new lil.GUI();
     // gui.title('');
     gui.addAll(params);
     // gui.show(false);
-
-    noLoop();
-    
-    gui.get('seed').onChange(() => { redraw(); });
-    
+    const update = () => { redraw(); };
+    gui.get('seed').onChange(update);
     svg_container = document.querySelector("#svg_container");
     gui.get('show_svg').onFinishChange(shown => { svg_container.style.display = shown ? 'flex' : 'none'; });
-    gui.get('svg_hatch_spacing').onFinishChange(redraw);
-    gui.get('svg_hatch_direction').onFinishChange(redraw);
-    gui.get('svg_crosshatch').onFinishChange(redraw);
+    gui.get('svg_hatch_spacing').onFinishChange(update);
+    gui.get('svg_hatch_direction').onFinishChange(update);
+    gui.get('svg_crosshatch').onFinishChange(update);
 }
 
 function draw() {
+    console.log(`→ Redrawing (${frameCount})`);
     state = generate();
     draw_p5(state);
     console.log(state);
-    
     // show svg
     const svg = draw_svg(state, config.SVG_PRECISION);
     svg_container.replaceChildren(svg_element(svg));
