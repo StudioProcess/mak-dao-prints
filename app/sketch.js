@@ -566,7 +566,7 @@ function draw_svg(state, precision = 2, format_for_export = false) {
     const trunc = decimals(precision);
     
     // console.log(format_px);
-    let xml = `<svg version="1.1" xmlns="http://www.w3.org/2000/svg" width="${size[0]}" height="${size[1]}" viewBox="0 0 ${format_px[0]} ${format_px[1]}" stroke="black" fill="none" stroke-linecap="round" stroke-width="${STROKE_WEIGHT}">\n`;
+    let xml = `<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape" width="${size[0]}" height="${size[1]}" viewBox="0 0 ${format_px[0]} ${format_px[1]}" stroke="black" fill="none" stroke-linecap="round" stroke-width="${STROKE_WEIGHT}">\n`;
     
     if (format_for_export) {
         xml += `  <g transform="translate(${trunc(format_px[0]/2)} ${trunc(format_px[1]/2)}) translate(${-width/2} ${-height/2})">\n`;
@@ -577,9 +577,10 @@ function draw_svg(state, precision = 2, format_for_export = false) {
        xml += `  <g>\n`;
     }
 
+    // Note: For Axidraw Layer Control see: https://wiki.evilmadscientist.com/AxiDraw_Layer_Control
     
     // connections
-    xml += `    <g id="connections">\n`;
+    xml += `    <g id="connections" inkscape:label="connections" inkscape:groupmode="layer">\n`;
     const nodes = state.nodes;
     const mask_m = letter_path('M', state.pos_m, precision, true, true);
     const mask_k = letter_path('K', state.pos_k, precision, true, true);
@@ -636,7 +637,7 @@ function draw_svg(state, precision = 2, format_for_export = false) {
     xml += `    </g>\n`;
     
     // Fill hatching (for nodes, m and k)
-    xml += `    <g id="hatching" stroke="black" fill="none">\n`;
+    xml += `    <g id="hatching" inkscape:label="hatching" inkscape:groupmode="layer" stroke="black" fill="none">\n`;
     for (let [i, node] of nodes.entries()) {
         const letter = letter_path(state.node_letters[i], node, precision, false, true); 
         const path = pt.hatch( letter, params.svg_hatch_spacing, params.svg_hatch_direction, true, precision );
@@ -666,7 +667,7 @@ function draw_svg(state, precision = 2, format_for_export = false) {
     xml += `    </g>\n`;
     
     // letters
-    xml += `    <g id="letters" stroke="black" fill="none">\n`;
+    xml += `    <g id="letters" inkscape:label="letters" inkscape:groupmode="layer" stroke="black" fill="none">\n`;
     for (let [i, n] of state.nodes.entries()) {
         const l = state.node_letters[i]; // letter
         n = n.map(trunc);
