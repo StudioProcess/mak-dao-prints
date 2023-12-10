@@ -602,6 +602,7 @@ function draw_svg(state, precision = 2, format_for_export = false) {
             paths = pt.clip_multiple(paths, mask_m);
             paths = pt.clip_multiple(paths, mask_k);
             for (let path of paths) {
+                path = pt.join_path(pt.parse_path(path), precision);
                 xml += `      <path d="${path}"/>\n`;
             }
         } else {
@@ -615,25 +616,25 @@ function draw_svg(state, precision = 2, format_for_export = false) {
     xml += `    <g id="hatching" stroke="black" fill="none">\n`;
     for (let [i, node] of nodes.entries()) {
         const letter = letter_path(state.node_letters[i], node, precision, false, true); 
-        const path = pt.hatch( letter, params.svg_hatch_spacing, params.svg_hatch_direction, true );
-        xml += `       <path d="${path}"/>`;
+        const path = pt.hatch( letter, params.svg_hatch_spacing, params.svg_hatch_direction, true, precision );
+        xml += `       <path d="${path}"/>\n`;
         if (params.svg_crosshatch) {
-            const cross = pt.hatch( letter, params.svg_hatch_spacing, params.svg_hatch_direction-90, true );
-            xml += `       <path d="${cross}"/>`;
+            const cross = pt.hatch( letter, params.svg_hatch_spacing, params.svg_hatch_direction-90, true, precision );
+            xml += `       <path d="${cross}"/>\n`;
         }
     }
     const letter_m = letter_path('M', state.pos_m);
     const letter_k = letter_path('K', state.pos_k);
-    const hatch_m = pt.hatch( letter_m, params.svg_hatch_spacing, params.svg_hatch_direction, true );
+    const hatch_m = pt.hatch( letter_m, params.svg_hatch_spacing, params.svg_hatch_direction, true, precision );
     xml += `       <path d="${hatch_m}"/>\n`;
     if (params.svg_crosshatch) {
-        const cross_m = pt.hatch( letter_m, params.svg_hatch_spacing, params.svg_hatch_direction-90, true );
+        const cross_m = pt.hatch( letter_m, params.svg_hatch_spacing, params.svg_hatch_direction-90, true, precision );
         xml += `       <path d="${cross_m}"/>\n`;
     }
-    const hatch_k = pt.hatch( letter_k, params.svg_hatch_spacing, params.svg_hatch_direction, true );
+    const hatch_k = pt.hatch( letter_k, params.svg_hatch_spacing, params.svg_hatch_direction, true, precision );
     xml += `       <path d="${hatch_k}"/>\n`;
     if (params.svg_crosshatch) {
-        const cross_k = pt.hatch( letter_k, params.svg_hatch_spacing, params.svg_hatch_direction-90, true );
+        const cross_k = pt.hatch( letter_k, params.svg_hatch_spacing, params.svg_hatch_direction-90, true, precision );
         xml += `       <path d="${cross_k}"/>\n`;
     }
     
@@ -647,8 +648,8 @@ function draw_svg(state, precision = 2, format_for_export = false) {
         xml += '      ' + letter_path(l, n);
     }
     // M and K (part of nodes)
-    xml += '      ' + letter_m + '\n';
-    xml += '      ' + letter_k + '\n';;
+    xml += '      ' + letter_m;
+    xml += '      ' + letter_k;
     xml += `    </g>\n`;
     
     xml += '  </g>\n';

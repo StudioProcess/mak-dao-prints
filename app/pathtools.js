@@ -1,8 +1,8 @@
 
 // Parse SVG path to a structured format
 function parse_path(d) {
-    const verbs = "MLCZ"; // supported path verbs
-    const unsupported = [ ...d.matchAll(new RegExp(`[^${verbs}\\d .,]`,'g')) ];
+    const verbs = "MmLlCcZz"; // supported path verbs
+    const unsupported = [ ...d.matchAll(new RegExp(`[^${verbs}\\d .,-]`,'g')) ];
     
     for (let x of unsupported) {
         console.warn(`Unsupported SVG path verb ${x} at position ${x.index}`)
@@ -178,7 +178,7 @@ function hatch_pattern(bbox, spacing, angle) {
 
 function line_to_path(l, decimals = null) {
     const trim = limit_decimals(decimals);
-    return `M ${trim(l[0])},${trim(l[1])} L${trim(l[2])},${trim(l[3])}`.trim();
+    return `M ${trim(l[0])} ${trim(l[1])} L ${trim(l[2])} ${trim(l[3])}`.trim();
 }
 
 function lines_to_path(lines, decimals = null) {
