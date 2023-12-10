@@ -207,5 +207,30 @@ function hatch(d, spacing, angle, return_path = false, decimals = null) {
     return out;
 }
 
+// points is an array of [x,y]
+// Returns: [left, top, right, bottom]
+function bbox(points) {
+    let l = Infinity, t = Infinity, r = 0, b = 0;
+    for (let [x, y] of points) {
+        if (x < l) { l = x; }
+        if (x > r) { r = x; }
+        if (y < t) { t = y; }
+        if (y > b) { b = y; }
+    }
+    return [l, t, r, b];
+}
+// points is an array of [x,y]
+// Returns: [avg_x, avg_y]
+function avg(points) {
+    let ax = 0, ay = 0;
+    for (let [x, y] of points) {
+        ax += x;
+        ay += y;
+    }
+    ax /= points.length;
+    ay /= points.length;
+    return [ax, ay];
+}
 
-export { parse_path, join_path, matrix, transform_path, clip, clip_multiple, hatch };
+
+export { parse_path, join_path, matrix, transform_path, clip, clip_multiple, hatch, bbox, avg };

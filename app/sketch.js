@@ -76,7 +76,7 @@ function setup() {
     gui.addAll(params);
     // gui.show(false);
     
-    const update_on_change = ['seed', 'num_nodes', 'grid_size', 'connect_min', 'connect_max', 'connect_step_chance', 'connect_step_min', 'connect_step_max', 'border', 'min_dist', 'show_m_and_k', 'm_and_k_dist', 'm_and_k_excl', 'use_bezier', 'bezier_control', 'add_bezier_bi', 'bezier_bi_point', 'bezier_bi_control'];
+    const update_on_change = ['seed', 'num_nodes', 'grid_size', 'connect_min', 'connect_max', 'connect_step_chance', 'connect_step_min', 'connect_step_max', 'border', 'min_dist', 'show_m_and_k', 'm_and_k_dist', 'm_and_k_excl', 'use_bezier', 'bezier_control', 'add_bezier_bi', 'bezier_bi_point', 'bezier_bi_control', 'layout_center', 'layout_center_mode'];
     const update_on_finish_change = ['svg_hatch_spacing', 'svg_hatch_direction', 'svg_crosshatch'];
     const update = () => { redraw(); };
     update_on_change.forEach( x => gui.get(x).onChange(update) );
@@ -578,9 +578,26 @@ function draw_svg(state, precision = 2, format_for_export = false) {
     }
 
     // Note: For Axidraw Layer Control see: https://wiki.evilmadscientist.com/AxiDraw_Layer_Control
+    let dx = 0, dy = 0; // translation for connections and letters (except m and k)
+    if (params.layout_center) {
+        if (params.layout_center_mode == 'bbox') {
+            const bbox = pt.bbox(state.nodes);
+            console.log(bbox);
+            dx = width/2 - (bbox[2] + bbox[0]) / 2;
+            dy = height/2 - (bbox[3] + bbox[1]) / 2;
+        } else if (params.layout_center_mode == 'avg') {
+            const avg = pt.avg(state.nodes);
+            console.log(avg);
+            dx = width/2 - avg[0];
+            dy = height/2 - avg[1];
+        }
+    }
     
     // connections
     xml += `    <g id="connections" inkscape:label="connections" inkscape:groupmode="layer">\n`;
+    if (params.layout_center) {
+        xml += `      <g transform="translate(${dx} ${dy})">\n`;
+    }
     const nodes = state.nodes;
     const mask_m = letter_path('M', state.pos_m, precision, true, true);
     const mask_k = letter_path('K', state.pos_k, precision, true, true);
@@ -634,10 +651,16 @@ function draw_svg(state, precision = 2, format_for_export = false) {
             xml += `      <path d="M ${l[0]} ${l[1]} L ${l[2]} ${l[3]}"/>\n`;
         }
     }
+    if (params.layout_center) {
+        xml += `      </g>\n`;
+    }
     xml += `    </g>\n`;
     
     // Fill hatching (for nodes, m and k)
     xml += `    <g id="hatching" inkscape:label="hatching" inkscape:groupmode="layer" stroke="black" fill="none">\n`;
+    if (params.layout_center) {
+        xml += `      <g transform="translate(${dx} ${dy})">\n`;
+    }
     for (let [i, node] of nodes.entries()) {
         const letter = letter_path(state.node_letters[i], node, precision, false, true); 
         const path = pt.hatch( letter, params.svg_hatch_spacing, params.svg_hatch_direction, true, precision );
@@ -646,6 +669,9 @@ function draw_svg(state, precision = 2, format_for_export = false) {
             const cross = pt.hatch( letter, params.svg_hatch_spacing, params.svg_hatch_direction-90, true, precision );
             xml += `       <path d="${cross}"/>\n`;
         }
+    }
+    if (params.layout_center) {
+        xml += `      </g>\n`;
     }
     const letter_m = letter_path('M', state.pos_m);
     const letter_k = letter_path('K', state.pos_k);
@@ -663,15 +689,20 @@ function draw_svg(state, precision = 2, format_for_export = false) {
             xml += `       <path d="${cross_k}"/>\n`;
         }
     }
-    
     xml += `    </g>\n`;
     
     // letters
     xml += `    <g id="letters" inkscape:label="letters" inkscape:groupmode="layer" stroke="black" fill="none">\n`;
+    if (params.layout_center) {
+        xml += `      <g transform="translate(${dx} ${dy})">\n`;
+    }
     for (let [i, n] of state.nodes.entries()) {
         const l = state.node_letters[i]; // letter
         n = n.map(trunc);
         xml += '      ' + letter_path(l, n);
+    }
+    if (params.layout_center) {
+        xml += `      </g>\n`;
     }
     // M and K (part of nodes)
     if (params.show_m_and_k) {

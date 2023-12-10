@@ -5,9 +5,9 @@ const config = {
     PIXEL_DENSITY: 2,
     FPS: 30,
     SVG_FORMAT: [297, 420],
-    SVG_DPI: 600 / 7, // determines printed size (e.g map height of 600 to 7in -> 600/7)
+    SVG_DPI: 600 / 7, // determines printed size (e.g map a length of 600 to 7in -> 600/7)
     SVG_ADD_FRAME: true,
-    SVG_DECIMALS: 2,
+    SVG_DECIMALS: 3,
 };
 
 const params = {
@@ -21,11 +21,13 @@ const params = {
     connect_step_chance: [0, 0, 100, 1],
     connect_step_min: [1, 1, undefined, 1],
     connect_step_max: [5, 1, undefined, 1],
+    
     use_bezier: true,
     bezier_control: [75, 0, 100, 1],
     add_bezier_bi: true,
     bezier_bi_point: [40, 0, 100, 1],
     bezier_bi_control: [50, 0, 100, 1],
+    
     show_m_and_k: true,
     m_and_k_dist: [330, 0, undefined, 1],
     m_and_k_excl: [60, 0, undefined, 1],
@@ -34,6 +36,9 @@ const params = {
     svg_hatch_spacing: [2, 0.1, undefined, 0.1],
     svg_hatch_direction: [-45, -180, 180, 1],
     svg_crosshatch: false,
+    
+    layout_center: true,
+    layout_center_mode: ['bbox', ['bbox', 'avg']],
 };
 
 export { config, params };
