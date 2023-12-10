@@ -4,8 +4,6 @@ import * as util from './util.js';
 import { config, params } from './params.js';
 import * as pt from './pathtools.js';
 
-const NUM_NODES = 6;
-const GRID_SIZE = 0;
 const SHOW_INDICES = false;
 const NODE_SIZE = 10;
 const STROKE_WEIGHT = 1;
@@ -17,31 +15,11 @@ const BACKDROP_SCALE = 200;
 
 // const BG = [255,255,250];
 const BG = [237, 232, 217];
-
-const SHOW_M_AND_K = true;
-const M_AND_K_DIST = 330;
-const M_AND_K_EXCL = 60;
-
 const SHOW_LOGO = true;
 const LOGO_SIZE = 70;
 
-const CONNECT_MIN = 1;
-const CONNECT_MAX = 3;
-
-const CONNECT_STEP_CHANCE = 0;
-const CONNECT_STEP_MIN = 1;
-const CONNECT_STEP_MAX = 5;
-
-const BORDER = 60;
-const MIN_DIST = 50;
 const MIN_DIST_RETRY = 999;
 
-const USE_BEZIER = true;
-const BEZIER_CONTROL = 75; // [0,100]
-
-const ADD_BEZIER_BI = true;
-const BEZIER_BI_POINT = 40;
-const BEZIER_BI_CONTROL = 50;
 const SHOW_BI_POINT = false;
 
 // Variables
@@ -97,13 +75,15 @@ function setup() {
     // gui.title('');
     gui.addAll(params);
     // gui.show(false);
+    
+    const update_on_change = ['seed', 'num_nodes', 'grid_size', 'connect_min', 'connect_max', 'connect_step_chance', 'connect_step_min', 'connect_step_max', 'border', 'min_dist', 'show_m_and_k', 'm_and_k_dist', 'm_and_k_excl', 'use_bezier', 'bezier_control', 'add_bezier_bi', 'bezier_bi_point', 'bezier_bi_control'];
+    const update_on_finish_change = ['svg_hatch_spacing', 'svg_hatch_direction', 'svg_crosshatch'];
     const update = () => { redraw(); };
-    gui.get('seed').onChange(update);
+    update_on_change.forEach( x => gui.get(x).onChange(update) );
+    update_on_finish_change.forEach( x => gui.get(x).onFinishChange(update) );
     svg_container = document.querySelector("#svg_container");
     gui.get('show_svg').onFinishChange(shown => { svg_container.style.display = shown ? 'flex' : 'none'; });
-    gui.get('svg_hatch_spacing').onFinishChange(update);
-    gui.get('svg_hatch_direction').onFinishChange(update);
-    gui.get('svg_crosshatch').onFinishChange(update);
+
 }
 
 function draw() {
@@ -132,8 +112,8 @@ function get_size(aspect_w_by_h, max_w = 600, max_h = 600) {
 // returns arguments for bezier()
 function pipe_h(x1, y1, x2, y2) {
     // middle point
-    const m1 = x1 + (x2 - x1) * BEZIER_CONTROL / 100;
-    const m2 = x2 - (x2 - x1) * BEZIER_CONTROL / 100;
+    const m1 = x1 + (x2 - x1) * params.bezier_control / 100;
+    const m2 = x2 - (x2 - x1) * params.bezier_control / 100;
     return [x1, y1, m1, y1, m2, y2, x2, y2];
 }
 
@@ -145,6 +125,7 @@ function pipe_h(x1, y1, x2, y2) {
 // }
 
 function snap_to_grid(arr) {
+    const GRID_SIZE = params.grid_size;
     if (GRID_SIZE <= 0) { return arr; }
     return arr.map(x => floor(x / GRID_SIZE) * GRID_SIZE + GRID_SIZE / 2);
 }
@@ -155,6 +136,8 @@ function in_box(x, y, box) {
 
 // box: [x,y,w,h]
 function get_random_pos(nodes = [], box = [], excl_boxes = []) {
+    const BORDER = params.border;
+    const MIN_DIST = params.min_dist;
     // minimum distance of (x,y) to other nodes
     function min_dist(x, y) {
         let min_d = Infinity;
@@ -251,6 +234,8 @@ function bezier_slope(t, x1, y1, x2, y2, x3, y3, x4, y4) {
 }
 
 function bifurcation(x1, y1, x2, y2, x3, y3) {
+    const BEZIER_BI_POINT = params.bezier_bi_point;
+    const BEZIER_BI_CONTROL = params.bezier_bi_control;
     // make sure point 1 is left of point2
     if (x1 > x2) {
         [x1, x2] = [x2, x1];
@@ -258,8 +243,8 @@ function bifurcation(x1, y1, x2, y2, x3, y3) {
     }
     const mx = x1 + (x2 - x1) / 2; // middle (x) between point 1 and point 2
     // bezier control points between point 1 and point 2
-    const c1 = [x1 + (x2 - x1) / 100 * BEZIER_CONTROL, y1];
-    const c2 = [x2 - (x2 - x1) / 100 * BEZIER_CONTROL, y2];
+    const c1 = [x1 + (x2 - x1) / 100 * params.bezier_control, y1];
+    const c2 = [x2 - (x2 - x1) / 100 * params.bezier_control, y2];
 
     let p, s;
 
@@ -309,7 +294,17 @@ function save_svg() {
     return timestamp;
 }
 
-function generate() {    
+function generate() {
+    const NUM_NODES = params.num_nodes;
+    const CONNECT_MIN = params.connect_min;
+    const CONNECT_MAX = params.connect_max;
+    const CONNECT_STEP_CHANCE = params.connect_step_chance;
+    const CONNECT_STEP_MIN = params.connect_step_min;
+    const CONNECT_STEP_MAX = params.connect_step_max;
+    const SHOW_M_AND_K = params.show_m_and_k;
+    const M_AND_K_DIST = params.m_and_k_dist;
+    const M_AND_K_EXCL = params.m_and_k_excl;
+    
     if (params.seed <= 0) {
         randomizeSeed(false); // do not redraw; just set param and update gui
     }
@@ -426,7 +421,7 @@ function generate() {
 
     // compute bifurcation
     state.bifurcation = null;
-    if (ADD_BEZIER_BI) {
+    if (params.add_bezier_bi) {
         // find two connected nodes nearest to center
         let conn = connection_near(width / 2, height / 2, connection_matrix, nodes);
         if (conn !== null) {
@@ -461,7 +456,7 @@ function draw_p5(state) {
     strokeWeight(STROKE_WEIGHT);
     const nodes = state.nodes;
     for (let [i, j] of state.connections) {
-        if (USE_BEZIER) {
+        if (params.use_bezier) {
             bezier( ...pipe_h(...nodes[i], ...nodes[j]) );
         } else {
             line(...nodes[i], ...nodes[j]);
@@ -506,7 +501,7 @@ function draw_p5(state) {
     }
     
     // draw M and K (extra letters)
-    if (SHOW_M_AND_K && USE_LETTERS) {
+    if (params.show_m_and_k && USE_LETTERS) {
         image(letters_img['M'], ...state.pos_m, NODE_SIZE, NODE_SIZE);
         image(letters_img['K'], ...state.pos_k, NODE_SIZE, NODE_SIZE);
         // for (let {letter, pos} of state.extra_letters) {
@@ -525,7 +520,7 @@ function draw_p5(state) {
     }
     
     // draw bifurcation
-    if (ADD_BEZIER_BI && state.bifurcation) {
+    if (params.add_bezier_bi && state.bifurcation) {
         const nodes = state.nodes;
         const conn = state.bifurcation.from_conn;
         const n = state.bifurcation.to_node;
@@ -589,7 +584,7 @@ function draw_svg(state, precision = 2, format_for_export = false) {
     const mask_m = letter_path('M', state.pos_m, precision, true, true);
     const mask_k = letter_path('K', state.pos_k, precision, true, true);
     for (let [i, j] of state.connections) {
-        if (USE_BEZIER) {
+        if (params.use_bezier) {
             const b = pipe_h(...nodes[i], ...nodes[j]).map(trunc); // unclipped connection between nodes i and j
             let paths = [ `M ${b[0]} ${b[1]} C ${b[2]} ${b[3]} ${b[4]} ${b[5]} ${b[6]} ${b[7]}` ]; // path for the connection
             // clip against *all* nodes (to clip overlaps as well)
@@ -624,17 +619,19 @@ function draw_svg(state, precision = 2, format_for_export = false) {
     }
     const letter_m = letter_path('M', state.pos_m);
     const letter_k = letter_path('K', state.pos_k);
-    const hatch_m = pt.hatch( letter_m, params.svg_hatch_spacing, params.svg_hatch_direction, true, precision );
-    xml += `       <path d="${hatch_m}"/>\n`;
-    if (params.svg_crosshatch) {
-        const cross_m = pt.hatch( letter_m, params.svg_hatch_spacing, params.svg_hatch_direction-90, true, precision );
-        xml += `       <path d="${cross_m}"/>\n`;
-    }
-    const hatch_k = pt.hatch( letter_k, params.svg_hatch_spacing, params.svg_hatch_direction, true, precision );
-    xml += `       <path d="${hatch_k}"/>\n`;
-    if (params.svg_crosshatch) {
-        const cross_k = pt.hatch( letter_k, params.svg_hatch_spacing, params.svg_hatch_direction-90, true, precision );
-        xml += `       <path d="${cross_k}"/>\n`;
+    if (params.show_m_and_k) {
+        const hatch_m = pt.hatch( letter_m, params.svg_hatch_spacing, params.svg_hatch_direction, true, precision );
+        xml += `       <path d="${hatch_m}"/>\n`;
+        if (params.svg_crosshatch) {
+            const cross_m = pt.hatch( letter_m, params.svg_hatch_spacing, params.svg_hatch_direction-90, true, precision );
+            xml += `       <path d="${cross_m}"/>\n`;
+        }
+        const hatch_k = pt.hatch( letter_k, params.svg_hatch_spacing, params.svg_hatch_direction, true, precision );
+        xml += `       <path d="${hatch_k}"/>\n`;
+        if (params.svg_crosshatch) {
+            const cross_k = pt.hatch( letter_k, params.svg_hatch_spacing, params.svg_hatch_direction-90, true, precision );
+            xml += `       <path d="${cross_k}"/>\n`;
+        }
     }
     
     xml += `    </g>\n`;
@@ -647,8 +644,10 @@ function draw_svg(state, precision = 2, format_for_export = false) {
         xml += '      ' + letter_path(l, n);
     }
     // M and K (part of nodes)
-    xml += '      ' + letter_m;
-    xml += '      ' + letter_k;
+    if (params.show_m_and_k) {
+        xml += '      ' + letter_m;
+        xml += '      ' + letter_k;
+    }
     xml += `    </g>\n`;
     
     xml += '  </g>\n';
