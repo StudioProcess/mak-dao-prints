@@ -602,6 +602,35 @@ function draw_svg(state, precision = 2, format_for_export = false) {
         } else {
             const l = [...nodes[i], ...nodes[j]].map(trunc);
             xml += `      <path d="M ${l[0]} ${l[1]} L ${l[2]} ${l[3]}"/>\n`;
+            // TODO: clip
+        }
+    }
+    // add bifurcation path
+    if (params.add_bezier_bi && state.bifurcation) {
+        const nodes = state.nodes;
+        const conn = state.bifurcation.from_conn;
+        const n = state.bifurcation.to_node;
+        if (params.use_bezier) {
+            const { bezier: b, point: p } = bifurcation(...nodes[conn[0]], ...nodes[conn[1]], ...nodes[n]);
+            let paths = [ `M ${b[0]} ${b[1]} C ${b[2]} ${b[3]} ${b[4]} ${b[5]} ${b[6]} ${b[7]}` ]; // path for the bifurcation
+            // clip against *all* nodes (to clip overlaps as well)
+            for (let [i, node] of nodes.entries()) {
+                const letter = letter_path( state.node_letters[i], node, precision, true, true); // letter mask path for node
+                paths = pt.clip_multiple(paths, letter);
+            }
+            // clip against m and k
+            paths = pt.clip_multiple(paths, mask_m);
+            paths = pt.clip_multiple(paths, mask_k);
+            for (let path of paths) {
+                path = pt.join_path(pt.parse_path(path), precision);
+                xml += `      <path d="${path}"/>\n`;
+            }
+        } else {
+            const p1 = nodes[conn[0]];
+            const p2 = nodes[conn[1]];
+            const p = [ p2[0] + (p1[0]-p2[0])*params.bezier_bi_point/100, p2[1] + (p1[1]-p2[1])*params.bezier_bi_point/100 ];
+            const l = [...p, ...nodes[n]].map(trunc);
+            xml += `      <path d="M ${l[0]} ${l[1]} L ${l[2]} ${l[3]}"/>\n`;
         }
     }
     xml += `    </g>\n`;
