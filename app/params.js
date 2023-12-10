@@ -43,6 +43,8 @@ const params = {
     
     node_size: [10, 1, undefined, 1],
     stroke_weight: [1, 1, undefined, 0.1],
+    
+    'SAVE': function() {},
 };
 
 export { config, params };

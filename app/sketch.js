@@ -83,7 +83,7 @@ function setup() {
     update_on_finish_change.forEach( x => gui.get(x).onFinishChange(update) );
     svg_container = document.querySelector("#svg_container");
     gui.get('show_svg').onFinishChange(shown => { svg_container.style.display = shown ? 'flex' : 'none'; });
-
+    gui.get('SAVE').onChange( () => { save(); })
 }
 
 function draw() {
@@ -732,15 +732,19 @@ function randomizeSeed(do_redraw = true) {
     }
 }
 
+function save() {
+    // util.save_canvas( params );
+    const ts = save_svg();
+    // saveCanvas(ts + '.png');
+}
+
 document.addEventListener('keydown', e => {
     // console.log(e.key, e.keyCode, e);
 
     if (e.key == 'f') { // f .. fullscreen
         util.toggle_fullscreen();
     } else if (e.key == 's') { // s .. save frame
-        // util.save_canvas( params );
-        const ts = save_svg();
-        // saveCanvas(ts + '.png');
+        save();
     } else if (e.key == 'h' || e.key == 'Tab') { // h or Tab .. toggle gui
         gui.toggle();
         e.preventDefault();
