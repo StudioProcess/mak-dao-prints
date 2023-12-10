@@ -5,8 +5,8 @@ import { config, params } from './params.js';
 import * as pt from './pathtools.js';
 
 const SHOW_INDICES = false;
-const NODE_SIZE = 10;
-const STROKE_WEIGHT = 1;
+// const NODE_SIZE = 10;
+// const STROKE_WEIGHT = 1;
 const USE_LETTERS = true;
 const FILL_LETTERS = false;
 const FILL_CIRCLES = false;
@@ -76,7 +76,7 @@ function setup() {
     gui.addAll(params);
     // gui.show(false);
     
-    const update_on_change = ['seed', 'num_nodes', 'grid_size', 'connect_min', 'connect_max', 'connect_step_chance', 'connect_step_min', 'connect_step_max', 'border', 'min_dist', 'show_m_and_k', 'm_and_k_dist', 'm_and_k_excl', 'use_bezier', 'bezier_control', 'add_bezier_bi', 'bezier_bi_point', 'bezier_bi_control', 'layout_center', 'layout_center_mode'];
+    const update_on_change = ['seed', 'num_nodes', 'grid_size', 'connect_min', 'connect_max', 'connect_step_chance', 'connect_step_min', 'connect_step_max', 'border', 'min_dist', 'show_m_and_k', 'm_and_k_dist', 'm_and_k_excl', 'use_bezier', 'bezier_control', 'add_bezier_bi', 'bezier_bi_point', 'bezier_bi_control', 'layout_center', 'layout_center_mode', 'svg_show_hatch', 'node_size', 'stroke_weight'];
     const update_on_finish_change = ['svg_hatch_spacing', 'svg_hatch_direction', 'svg_crosshatch'];
     const update = () => { redraw(); };
     update_on_change.forEach( x => gui.get(x).onChange(update) );
@@ -448,12 +448,13 @@ function generate() {
 }
 
 function draw_p5(state) {
+    const NODE_SIZE = params.node_size;
     background(BG);
     
     // draw connections
     noFill();
     stroke(0);
-    strokeWeight(STROKE_WEIGHT);
+    strokeWeight(params.stroke_weight);
     const nodes = state.nodes;
     for (let [i, j] of state.connections) {
         if (params.use_bezier) {
@@ -551,7 +552,7 @@ function mask_svg_data(letter) {
 }
 
 function letter_path(letter, pos, decimals = 2, mask = false, data_only = false) {
-    const m = pt.matrix().translate(...pos).scale(NODE_SIZE/100).translate(-50, -50);
+    const m = pt.matrix().translate(...pos).scale(params.node_size/100).translate(-50, -50);
     let d = mask ? mask_svg_data(letter) : letter_svg_data(letter)
     d = pt.transform_path(d, m, decimals);
     if (data_only) { return d; }
@@ -566,7 +567,7 @@ function draw_svg(state, precision = 2, format_for_export = false) {
     const trunc = decimals(precision);
     
     // console.log(format_px);
-    let xml = `<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape" width="${size[0]}" height="${size[1]}" viewBox="0 0 ${format_px[0]} ${format_px[1]}" stroke="black" fill="none" stroke-linecap="round" stroke-width="${STROKE_WEIGHT}">\n`;
+    let xml = `<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape" width="${size[0]}" height="${size[1]}" viewBox="0 0 ${format_px[0]} ${format_px[1]}" stroke="black" fill="none" stroke-linecap="round" stroke-width="${params.stroke_weight}">\n`;
     
     if (format_for_export) {
         xml += `  <g transform="translate(${trunc(format_px[0]/2)} ${trunc(format_px[1]/2)}) translate(${-width/2} ${-height/2})">\n`;
@@ -578,16 +579,16 @@ function draw_svg(state, precision = 2, format_for_export = false) {
     }
 
     // Note: For Axidraw Layer Control see: https://wiki.evilmadscientist.com/AxiDraw_Layer_Control
-    let dx = 0, dy = 0; // translation for connections and letters (except m and k)
+    
+    // translation for connections and letters (except m and k)
+    let dx = 0, dy = 0; 
     if (params.layout_center) {
         if (params.layout_center_mode == 'bbox') {
             const bbox = pt.bbox(state.nodes);
-            console.log(bbox);
             dx = width/2 - (bbox[2] + bbox[0]) / 2;
             dy = height/2 - (bbox[3] + bbox[1]) / 2;
         } else if (params.layout_center_mode == 'avg') {
             const avg = pt.avg(state.nodes);
-            console.log(avg);
             dx = width/2 - avg[0];
             dy = height/2 - avg[1];
         }
@@ -657,7 +658,7 @@ function draw_svg(state, precision = 2, format_for_export = false) {
     xml += `    </g>\n`;
     
     // Fill hatching (for nodes, m and k)
-    xml += `    <g id="hatching" inkscape:label="hatching" inkscape:groupmode="layer" stroke="black" fill="none">\n`;
+    xml += `    <g id="hatching" inkscape:label="hatching" inkscape:groupmode="layer" ${params.svg_show_hatch ? 'stroke="black"' : 'stroke="none"'} fill="none">\n`;
     if (params.layout_center) {
         xml += `      <g transform="translate(${dx} ${dy})">\n`;
     }
@@ -692,7 +693,7 @@ function draw_svg(state, precision = 2, format_for_export = false) {
     xml += `    </g>\n`;
     
     // letters
-    xml += `    <g id="letters" inkscape:label="letters" inkscape:groupmode="layer" stroke="black" fill="none">\n`;
+    xml += `    <g id="letters" inkscape:label="letters" inkscape:groupmode="layer" ${params.svg_show_hatch ? 'stroke="black" fill="none"' : 'stroke="none" fill="black"'}>\n`;
     if (params.layout_center) {
         xml += `      <g transform="translate(${dx} ${dy})">\n`;
     }

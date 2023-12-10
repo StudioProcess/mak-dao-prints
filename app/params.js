@@ -33,12 +33,16 @@ const params = {
     m_and_k_excl: [60, 0, undefined, 1],
     
     show_svg: true,
+    svg_show_hatch: false,
     svg_hatch_spacing: [2, 0.1, undefined, 0.1],
     svg_hatch_direction: [-45, -180, 180, 1],
     svg_crosshatch: false,
     
     layout_center: true,
     layout_center_mode: ['bbox', ['bbox', 'avg']],
+    
+    node_size: [10, 1, undefined, 1],
+    stroke_weight: [1, 1, undefined, 0.1],
 };
 
 export { config, params };
