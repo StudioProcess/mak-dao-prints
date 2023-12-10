@@ -104,6 +104,7 @@ function setup() {
     gui.get('show_svg').onFinishChange(shown => { svg_container.style.display = shown ? 'flex' : 'none'; });
     gui.get('svg_hatch_spacing').onFinishChange(redraw);
     gui.get('svg_hatch_direction').onFinishChange(redraw);
+    gui.get('svg_crosshatch').onFinishChange(redraw);
 }
 
 function draw() {
@@ -616,13 +617,26 @@ function draw_svg(state, precision = 2, format_for_export = false) {
         const letter = letter_path(state.node_letters[i], node, precision, false, true); 
         const path = pt.hatch( letter, params.svg_hatch_spacing, params.svg_hatch_direction, true );
         xml += `       <path d="${path}"/>`;
+        if (params.svg_crosshatch) {
+            const cross = pt.hatch( letter, params.svg_hatch_spacing, params.svg_hatch_direction-90, true );
+            xml += `       <path d="${cross}"/>`;
+        }
     }
     const letter_m = letter_path('M', state.pos_m);
     const letter_k = letter_path('K', state.pos_k);
     const hatch_m = pt.hatch( letter_m, params.svg_hatch_spacing, params.svg_hatch_direction, true );
-    const hatch_k = pt.hatch( letter_k, params.svg_hatch_spacing, params.svg_hatch_direction, true );
     xml += `       <path d="${hatch_m}"/>\n`;
+    if (params.svg_crosshatch) {
+        const cross_m = pt.hatch( letter_m, params.svg_hatch_spacing, params.svg_hatch_direction-90, true );
+        xml += `       <path d="${cross_m}"/>\n`;
+    }
+    const hatch_k = pt.hatch( letter_k, params.svg_hatch_spacing, params.svg_hatch_direction, true );
     xml += `       <path d="${hatch_k}"/>\n`;
+    if (params.svg_crosshatch) {
+        const cross_k = pt.hatch( letter_k, params.svg_hatch_spacing, params.svg_hatch_direction-90, true );
+        xml += `       <path d="${cross_k}"/>\n`;
+    }
+    
     xml += `    </g>\n`;
     
     // letters
