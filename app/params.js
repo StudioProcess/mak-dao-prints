@@ -44,6 +44,13 @@ const params = {
     node_size: [10, 1, undefined, 1],
     stroke_weight: [1, 1, undefined, 0.1],
     
+    bg_color: '#efe9ce',
+    conn_color: '#000',
+    node_color: '#000',
+    use_m_and_k_color: false,
+    m_and_k_color: '#000',
+    
+    
     'SAVE': function() {},
 };
 

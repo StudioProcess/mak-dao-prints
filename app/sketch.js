@@ -13,8 +13,6 @@ const FILL_CIRCLES = false;
 const USE_NODE_BACKDROP = false;
 const BACKDROP_SCALE = 200;
 
-// const BG = [255,255,250];
-const BG = [237, 232, 217];
 const SHOW_LOGO = true;
 const LOGO_SIZE = 70;
 
@@ -76,7 +74,7 @@ function setup() {
     gui.addAll(params);
     // gui.show(false);
     
-    const update_on_change = ['seed', 'num_nodes', 'grid_size', 'connect_min', 'connect_max', 'connect_step_chance', 'connect_step_min', 'connect_step_max', 'border', 'min_dist', 'show_m_and_k', 'm_and_k_dist', 'm_and_k_excl', 'use_bezier', 'bezier_control', 'add_bezier_bi', 'bezier_bi_point', 'bezier_bi_control', 'layout_center', 'layout_center_mode', 'svg_show_hatch', 'node_size', 'stroke_weight'];
+    const update_on_change = ['seed', 'num_nodes', 'grid_size', 'connect_min', 'connect_max', 'connect_step_chance', 'connect_step_min', 'connect_step_max', 'border', 'min_dist', 'show_m_and_k', 'm_and_k_dist', 'm_and_k_excl', 'use_bezier', 'bezier_control', 'add_bezier_bi', 'bezier_bi_point', 'bezier_bi_control', 'layout_center', 'layout_center_mode', 'svg_show_hatch', 'node_size', 'stroke_weight', 'bg_color', 'conn_color', 'node_color', 'use_m_and_k_color', 'm_and_k_color'];
     const update_on_finish_change = ['svg_hatch_spacing', 'svg_hatch_direction', 'svg_crosshatch'];
     const update = () => { redraw(); };
     update_on_change.forEach( x => gui.get(x).onChange(update) );
@@ -449,6 +447,7 @@ function generate() {
 
 function draw_p5(state) {
     const NODE_SIZE = params.node_size;
+    const BG = params.bg_color;
     background(BG);
     
     const nodes = state.nodes;
@@ -606,6 +605,9 @@ function draw_svg(state, precision = 2, format_for_export = false) {
     // console.log(format_px);
     let xml = `<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape" width="${size[0]}" height="${size[1]}" viewBox="0 0 ${format_px[0]} ${format_px[1]}" stroke="black" fill="none" stroke-linecap="round" stroke-width="${params.stroke_weight}">\n`;
     
+    // background rect
+    xml += `  <rect id="bg" width="${format_px[0]}" height="${format_px[1]}" stroke="none" fill="${params.bg_color}"/>\n`;
+    
     if (format_for_export) {
         xml += `  <g transform="translate(${trunc(format_px[0]/2)} ${trunc(format_px[1]/2)}) translate(${-width/2} ${-height/2})">\n`;
         if (config.SVG_ADD_FRAME) {
@@ -622,7 +624,7 @@ function draw_svg(state, precision = 2, format_for_export = false) {
     let [dx, dy] = get_layout_translation(nodes);
     
     // connections
-    xml += `    <g id="connections" inkscape:label="connections" inkscape:groupmode="layer">\n`;
+    xml += `    <g id="connections" inkscape:label="connections" inkscape:groupmode="layer" stroke="${params.conn_color}">\n`;
     if (params.layout_center) {
         xml += `      <g transform="translate(${dx} ${dy})">\n`;
     }
@@ -723,7 +725,8 @@ function draw_svg(state, precision = 2, format_for_export = false) {
     xml += `    </g>\n`;
     
     // letters
-    xml += `    <g id="letters" inkscape:label="letters" inkscape:groupmode="layer" ${params.svg_show_hatch ? 'stroke="black" fill="none"' : 'stroke="none" fill="black"'}>\n`;
+    let stroke_fill = params.svg_show_hatch ? `stroke="${params.node_color}" fill="none"` : `stroke="none" fill="${params.node_color}"`;
+    xml += `    <g id="letters" inkscape:label="letters" inkscape:groupmode="layer" ${stroke_fill}>\n`;
     if (params.layout_center) {
         xml += `      <g transform="translate(${dx} ${dy})">\n`;
     }
@@ -737,8 +740,10 @@ function draw_svg(state, precision = 2, format_for_export = false) {
     }
     // M and K (part of nodes)
     if (params.show_m_and_k) {
+        if (params.use_m_and_k_color) { xml += `      <g fill="${params.m_and_k_color}">\n`; }
         xml += '      ' + letter_m;
         xml += '      ' + letter_k;
+        if (params.use_m_and_k_color) { xml += `      </g>\n`; }
     }
     xml += `    </g>\n`;
     
