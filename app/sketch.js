@@ -606,7 +606,8 @@ function draw_svg(state, precision = 2, format_for_export = false) {
     let xml = `<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape" width="${size[0]}" height="${size[1]}" viewBox="0 0 ${format_px[0]} ${format_px[1]}" stroke="black" fill="none" stroke-linecap="round" stroke-width="${params.stroke_weight}">\n`;
     
     // background rect
-    xml += `  <rect id="bg" width="${format_px[0]}" height="${format_px[1]}" stroke="none" fill="${params.bg_color}"/>\n`;
+    const five_mm = mm2px(5); // move it out of bounds, so it doesn't get drawn by axidraw
+    xml += `  <rect id="bg" x="${-five_mm}" y="${-five_mm}" width="${format_px[0]+2*five_mm}" height="${format_px[1]+2*five_mm}" stroke="none" fill="${params.bg_color}"/>\n`;
     
     if (format_for_export) {
         xml += `  <g transform="translate(${trunc(format_px[0]/2)} ${trunc(format_px[1]/2)}) translate(${-width/2} ${-height/2})">\n`;
