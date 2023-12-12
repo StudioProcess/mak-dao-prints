@@ -561,6 +561,15 @@ function letter_path(letter, pos, decimals = 2, mask = false, data_only = false)
     // return `<path transform="translate(${pos[0]} ${pos[1]}) scale(${NODE_SIZE/100}) translate(-50 -50)" vector-effect="non-scaling-stroke" d="${d}"/>\n`;
 }
 
+// clip multiple paths agains multiple clip paths
+function clip(paths, clips) {
+    let out = [...paths];
+    for (let c of clips) {
+        out = pt.clip_multiple(out, c);
+    }
+    return out;
+}
+
 function draw_svg(state, precision = 2, format_for_export = false) {
     const size = format_for_export ? [config.SVG_FORMAT[0] + 'mm', config.SVG_FORMAT[1] + 'mm'] : [width, height];
     const format_px = format_for_export ? [mm2px(config.SVG_FORMAT[0]), mm2px(config.SVG_FORMAT[1])] : [width, height];
@@ -599,31 +608,35 @@ function draw_svg(state, precision = 2, format_for_export = false) {
     if (params.layout_center) {
         xml += `      <g transform="translate(${dx} ${dy})">\n`;
     }
+    // paths to clip
     const nodes = state.nodes;
-    const mask_m = letter_path('M', state.pos_m, precision, true, true);
-    const mask_k = letter_path('K', state.pos_k, precision, true, true);
+    let paths = [];
     for (let [i, j] of state.connections) {
         if (params.use_bezier) {
             const b = pipe_h(...nodes[i], ...nodes[j]).map(trunc); // unclipped connection between nodes i and j
-            let paths = [ `M ${b[0]} ${b[1]} C ${b[2]} ${b[3]} ${b[4]} ${b[5]} ${b[6]} ${b[7]}` ]; // path for the connection
-            // clip against *all* nodes (to clip overlaps as well)
-            for (let [i, node] of nodes.entries()) {
-                const letter = letter_path( state.node_letters[i], node, precision, true, true); // letter mask path for node
-                paths = pt.clip_multiple(paths, letter);
-            }
-            // clip against m and k
-            paths = pt.clip_multiple(paths, mask_m);
-            paths = pt.clip_multiple(paths, mask_k);
-            for (let path of paths) {
-                path = pt.join_path(pt.parse_path(path), precision);
-                xml += `      <path d="${path}"/>\n`;
-            }
+            paths.push( `M ${b[0]} ${b[1]} C ${b[2]} ${b[3]} ${b[4]} ${b[5]} ${b[6]} ${b[7]}` ); // path for the connection
         } else {
-            const l = [...nodes[i], ...nodes[j]].map(trunc);
-            xml += `      <path d="M ${l[0]} ${l[1]} L ${l[2]} ${l[3]}"/>\n`;
-            // TODO: clip
+            const l = [...nodes[i], ...nodes[j]];
+            paths.push(`M ${l[0]} ${l[1]} L ${l[2]} ${l[3]}`);
         }
     }
+    // clip against *all* nodes (to clip overlaps as well)
+    const clip_paths = [];
+    for (let [i, node] of nodes.entries()) {
+        const letter = letter_path( state.node_letters[i], node, precision, true, true); // letter mask path for node
+        clip_paths.push(letter);
+    }
+    const mask_m = letter_path('M', state.pos_m, precision, true, true);
+    const mask_k = letter_path('K', state.pos_k, precision, true, true);
+    clip_paths.push(mask_m, mask_k);
+    // perform clipping
+    paths = clip(paths, clip_paths);
+    // append clipped paths
+    for (let path of paths) {
+        path = pt.join_path(pt.parse_path(path), precision);
+        xml += `      <path d="${path}"/>\n`;
+    }
+    
     // add bifurcation path
     if (params.add_bezier_bi && state.bifurcation) {
         const nodes = state.nodes;
