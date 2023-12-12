@@ -457,7 +457,7 @@ function draw_p5(state) {
     
     // draw connections
     noFill();
-    stroke(0);
+    stroke(params.conn_color);
     strokeWeight(params.stroke_weight);
     for (let [i, j] of state.connections) {
         if (params.use_bezier) {
@@ -483,7 +483,7 @@ function draw_p5(state) {
                     fill(BG);
                     ellipse(...n, NODE_SIZE * BACKDROP_SCALE / 100 * 0.75, NODE_SIZE * BACKDROP_SCALE / 100);
                 }
-                if (FILL_LETTERS) { fill(0); } else { fill(BG); }
+                if (FILL_LETTERS) { fill(params.node_color); } else { fill(BG); }
                 rect(...n, NODE_SIZE * 0.66, NODE_SIZE);
                 image(img, ...n, NODE_SIZE, NODE_SIZE);
             } else {
@@ -492,7 +492,7 @@ function draw_p5(state) {
                     fill(BG);
                     ellipse(...n, NODE_SIZE * BACKDROP_SCALE / 100, NODE_SIZE * BACKDROP_SCALE / 100);
                 }
-                if (FILL_CIRCLES) { fill(0); noStroke(); }
+                if (FILL_CIRCLES) { fill(params.node_color); noStroke(); }
                 else { fill(BG); stroke(0); }
                 ellipse(...n, NODE_SIZE, NODE_SIZE);
             }
@@ -533,7 +533,7 @@ function draw_p5(state) {
         const conn = state.bifurcation.from_conn;
         const n = state.bifurcation.to_node;
         noFill();
-        stroke(0);
+        stroke(params.conn_color);
         const { bezier: b, point: p } = bifurcation(...nodes[conn[0]], ...nodes[conn[1]], ...nodes[n]);
         bezier(...b);
         if (SHOW_BI_POINT) {
