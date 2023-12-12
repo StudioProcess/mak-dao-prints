@@ -75,7 +75,7 @@ function setup() {
     // gui.show(false);
     
     const update_on_change = ['seed', 'num_nodes', 'grid_size', 'connect_min', 'connect_max', 'connect_step_chance', 'connect_step_min', 'connect_step_max', 'border', 'min_dist', 'show_m_and_k', 'm_and_k_dist', 'm_and_k_excl', 'use_bezier', 'bezier_control', 'add_bezier_bi', 'bezier_bi_point', 'bezier_bi_control', 'layout_center', 'layout_center_mode', 'svg_show_hatch', 'node_size', 'stroke_weight', 'bg_color', 'conn_color', 'node_color', 'use_m_and_k_color', 'm_and_k_color'];
-    const update_on_finish_change = ['svg_hatch_spacing', 'svg_hatch_direction', 'svg_crosshatch'];
+    const update_on_finish_change = ['svg_hatch_spacing', 'svg_hatch_direction', 'svg_hatch_shorten', 'svg_crosshatch'];
     const update = () => { redraw(); };
     update_on_change.forEach( x => gui.get(x).onChange(update) );
     update_on_finish_change.forEach( x => gui.get(x).onFinishChange(update) );
@@ -697,10 +697,10 @@ function draw_svg(state, precision = 2, format_for_export = false) {
     }
     for (let [i, node] of nodes.entries()) {
         const letter = letter_path(state.node_letters[i], node, precision, false, true); 
-        const path = pt.hatch( letter, params.svg_hatch_spacing, params.svg_hatch_direction, true, precision );
+        const path = pt.hatch( letter, params.svg_hatch_spacing, params.svg_hatch_direction, params.svg_hatch_shorten, true, precision );
         xml += `       <path d="${path}"/>\n`;
         if (params.svg_crosshatch) {
-            const cross = pt.hatch( letter, params.svg_hatch_spacing, params.svg_hatch_direction-90, true, precision );
+            const cross = pt.hatch( letter, params.svg_hatch_spacing, params.svg_hatch_direction-90, params.svg_hatch_shorten, true, precision );
             xml += `       <path d="${cross}"/>\n`;
         }
     }
@@ -710,16 +710,16 @@ function draw_svg(state, precision = 2, format_for_export = false) {
     const letter_m = letter_path('M', state.pos_m);
     const letter_k = letter_path('K', state.pos_k);
     if (params.show_m_and_k) {
-        const hatch_m = pt.hatch( letter_m, params.svg_hatch_spacing, params.svg_hatch_direction, true, precision );
+        const hatch_m = pt.hatch( letter_m, params.svg_hatch_spacing, params.svg_hatch_direction, params.svg_hatch_shorten, true, precision );
         xml += `       <path d="${hatch_m}"/>\n`;
         if (params.svg_crosshatch) {
-            const cross_m = pt.hatch( letter_m, params.svg_hatch_spacing, params.svg_hatch_direction-90, true, precision );
+            const cross_m = pt.hatch( letter_m, params.svg_hatch_spacing, params.svg_hatch_direction-90, params.svg_hatch_shorten, true, precision );
             xml += `       <path d="${cross_m}"/>\n`;
         }
-        const hatch_k = pt.hatch( letter_k, params.svg_hatch_spacing, params.svg_hatch_direction, true, precision );
+        const hatch_k = pt.hatch( letter_k, params.svg_hatch_spacing, params.svg_hatch_direction, params.svg_hatch_shorten, true, precision );
         xml += `       <path d="${hatch_k}"/>\n`;
         if (params.svg_crosshatch) {
-            const cross_k = pt.hatch( letter_k, params.svg_hatch_spacing, params.svg_hatch_direction-90, true, precision );
+            const cross_k = pt.hatch( letter_k, params.svg_hatch_spacing, params.svg_hatch_direction-90, params.svg_hatch_shorten, true, precision );
             xml += `       <path d="${cross_k}"/>\n`;
         }
     }

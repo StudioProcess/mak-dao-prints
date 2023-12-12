@@ -34,14 +34,15 @@ const params = {
     
     show_svg: true,
     svg_show_hatch: false,
-    svg_hatch_spacing: [2, 0.1, undefined, 0.1],
-    svg_hatch_direction: [-45, -180, 180, 1],
-    svg_crosshatch: false,
+    svg_hatch_spacing: [0.5, 0.1, undefined, 0.1],
+    svg_hatch_direction: [0, -180, 180, 1],
+    svg_hatch_shorten: [0.5, 0, undefined, 0.1],
+    svg_crosshatch: true,
     
     layout_center: true,
     layout_center_mode: ['bbox', ['bbox', 'avg']],
     
-    node_size: [10, 1, undefined, 1],
+    node_size: [30, 1, undefined, 1],
     stroke_weight: [1, 1, undefined, 0.1],
     
     bg_color: '#efe9ce',

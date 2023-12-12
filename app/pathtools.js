@@ -185,13 +185,29 @@ function lines_to_path(lines, decimals = null) {
     return lines.map(x => line_to_path(x, decimals)).join(' ');
 }
 
-// Returns array of lines [x1, y1, x2, y2]
-function hatch(d, spacing, angle, return_path = false, decimals = null) {
+// Vector from two points
+function vec(x1, y1, x2, y2) {
+    return [ x2-x1, y2-y1 ];
+}
+
+// Length of a vector
+function vec_len([x, y]) {
+    return Math.sqrt( x**2 + y**2 );
+}
+
+// Normalize vector to given length
+function vec_norm([x, y], target_len = 1) {
+    const len = vec_len([x, y]);
+    return [ x/len*target_len, y/len*target_len ];
+}
+
+// Returns array of lines [x1, y1, x2, y2] or pathdata string if return_path == true
+function hatch(d, spacing, angle, shorten = 0, return_path = false, decimals = null) {
     const p = new paper.CompoundPath(d);
     const bbox = [p.bounds.x, p.bounds.y, p.bounds.width, p.bounds.height];
 
     const lines = hatch_pattern(bbox, spacing, angle);
-    const out = [];
+    let out = [];
     for (let l of lines) {
         const pline = new paper.Path.Line(...l)
         const inter = pline.getCrossings(p);
@@ -200,6 +216,19 @@ function hatch(d, spacing, angle, return_path = false, decimals = null) {
             const b = inter[i];
             out.push([a.point.x, a.point.y, b.point.x, b.point.y]);
         }
+    }
+    if (shorten > 0) {
+        const out2 = [];
+        for (let line of out) {
+            let v = vec(...line);
+            const a = vec_len(v);
+            // console.log(line, v, a);
+            if (a > 2*shorten) { // line will not get shortened to nothing
+                v = [ v[0]/a*shorten, v[1]/a*shorten ];
+                out2.push([ line[0]+v[0], line[1]+v[1], line[2]-v[0], line[3]-v[1] ]);
+            }
+        }
+        out = out2;
     }
     if (return_path) {
         return lines_to_path(out, decimals);
