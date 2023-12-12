@@ -451,11 +451,15 @@ function draw_p5(state) {
     const NODE_SIZE = params.node_size;
     background(BG);
     
+    const nodes = state.nodes;
+    let [dx, dy] = get_layout_translation(nodes);
+    push();
+    translate(dx, dy);
+    
     // draw connections
     noFill();
     stroke(0);
     strokeWeight(params.stroke_weight);
-    const nodes = state.nodes;
     for (let [i, j] of state.connections) {
         if (params.use_bezier) {
             bezier( ...pipe_h(...nodes[i], ...nodes[j]) );
@@ -500,9 +504,11 @@ function draw_p5(state) {
             }
         }
     }
+    pop();
     
     // draw M and K (extra letters)
     if (params.show_m_and_k && USE_LETTERS) {
+        imageMode(CENTER);
         image(letters_img['M'], ...state.pos_m, NODE_SIZE, NODE_SIZE);
         image(letters_img['K'], ...state.pos_k, NODE_SIZE, NODE_SIZE);
         // for (let {letter, pos} of state.extra_letters) {
@@ -522,6 +528,8 @@ function draw_p5(state) {
     
     // draw bifurcation
     if (params.add_bezier_bi && state.bifurcation) {
+        push();
+        translate(dx, dy);
         const nodes = state.nodes;
         const conn = state.bifurcation.from_conn;
         const n = state.bifurcation.to_node;
@@ -534,6 +542,7 @@ function draw_p5(state) {
             noStroke();
             ellipse(...p, NODE_SIZE / 3, NODE_SIZE / 3);
         }
+        pop();
     }
 }
 
@@ -570,6 +579,25 @@ function clip(paths, clips) {
     return out;
 }
 
+// Determine translation necessary to center layout
+// Translation for connections and letters (except m and k)
+// Returns [dx, dy]
+function get_layout_translation(nodes) {
+    let dx = 0, dy = 0; 
+    if (params.layout_center) {
+        if (params.layout_center_mode == 'bbox') {
+            const bbox = pt.bbox(state.nodes);
+            dx = width/2 - (bbox[2] + bbox[0]) / 2;
+            dy = height/2 - (bbox[3] + bbox[1]) / 2;
+        } else if (params.layout_center_mode == 'avg') {
+            const avg = pt.avg(state.nodes);
+            dx = width/2 - avg[0];
+            dy = height/2 - avg[1];
+        }
+    }
+    return [dx, dy];
+}
+
 function draw_svg(state, precision = 2, format_for_export = false) {
     const size = format_for_export ? [config.SVG_FORMAT[0] + 'mm', config.SVG_FORMAT[1] + 'mm'] : [width, height];
     const format_px = format_for_export ? [mm2px(config.SVG_FORMAT[0]), mm2px(config.SVG_FORMAT[1])] : [width, height];
@@ -590,18 +618,8 @@ function draw_svg(state, precision = 2, format_for_export = false) {
     // Note: For Axidraw Layer Control see: https://wiki.evilmadscientist.com/AxiDraw_Layer_Control
     
     // translation for connections and letters (except m and k)
-    let dx = 0, dy = 0; 
-    if (params.layout_center) {
-        if (params.layout_center_mode == 'bbox') {
-            const bbox = pt.bbox(state.nodes);
-            dx = width/2 - (bbox[2] + bbox[0]) / 2;
-            dy = height/2 - (bbox[3] + bbox[1]) / 2;
-        } else if (params.layout_center_mode == 'avg') {
-            const avg = pt.avg(state.nodes);
-            dx = width/2 - avg[0];
-            dy = height/2 - avg[1];
-        }
-    }
+    const nodes = state.nodes;
+    let [dx, dy] = get_layout_translation(nodes);
     
     // connections
     xml += `    <g id="connections" inkscape:label="connections" inkscape:groupmode="layer">\n`;
@@ -609,7 +627,6 @@ function draw_svg(state, precision = 2, format_for_export = false) {
         xml += `      <g transform="translate(${dx} ${dy})">\n`;
     }
     // paths to clip
-    const nodes = state.nodes;
     let paths = [];
     for (let [i, j] of state.connections) {
         if (params.use_bezier) {
