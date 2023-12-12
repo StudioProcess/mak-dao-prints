@@ -38,6 +38,7 @@ const params = {
     svg_hatch_direction: [0, -180, 180, 1],
     svg_hatch_shorten: [0.5, 0, undefined, 0.1],
     svg_crosshatch: true,
+    svg_extra_outline: true,
     
     layout_center: true,
     layout_center_mode: ['bbox', ['bbox', 'avg']],

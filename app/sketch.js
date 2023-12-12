@@ -75,7 +75,7 @@ function setup() {
     // gui.show(false);
     
     const update_on_change = ['seed', 'num_nodes', 'grid_size', 'connect_min', 'connect_max', 'connect_step_chance', 'connect_step_min', 'connect_step_max', 'border', 'min_dist', 'show_m_and_k', 'm_and_k_dist', 'm_and_k_excl', 'use_bezier', 'bezier_control', 'add_bezier_bi', 'bezier_bi_point', 'bezier_bi_control', 'layout_center', 'layout_center_mode', 'svg_show_hatch', 'node_size', 'stroke_weight', 'bg_color', 'conn_color', 'node_color', 'use_m_and_k_color', 'm_and_k_color'];
-    const update_on_finish_change = ['svg_hatch_spacing', 'svg_hatch_direction', 'svg_hatch_shorten', 'svg_crosshatch'];
+    const update_on_finish_change = ['svg_hatch_spacing', 'svg_hatch_direction', 'svg_hatch_shorten', 'svg_crosshatch', 'svg_extra_outline'];
     const update = () => { redraw(); };
     update_on_change.forEach( x => gui.get(x).onChange(update) );
     update_on_finish_change.forEach( x => gui.get(x).onFinishChange(update) );
@@ -689,61 +689,78 @@ function draw_svg(state, precision = 2, format_for_export = false) {
     }
     xml += `    </g>\n`;
     
-    // Fill hatching (for nodes, m and k)
-    xml += `    <g id="hatching" inkscape:label="hatching" inkscape:groupmode="layer" ${params.svg_show_hatch ? 'stroke="black"' : 'stroke="none"'} fill="none">\n`;
+    // letters (includes hatching)
+    let sf_outline, sf_hatch;
+    if (params.svg_show_hatch) {
+        sf_outline = `stroke="${params.node_color}" fill="none"`;
+        sf_hatch = sf_outline;
+    } else {
+        sf_outline = `stroke="none" fill="${params.node_color}"`;
+        sf_hatch = 'stroke="none" fill="none"';
+    }
+    xml += `    <g id="letters" inkscape:label="letters" inkscape:groupmode="layer" ${sf_outline}>\n`;
     if (params.layout_center) {
         xml += `      <g transform="translate(${dx} ${dy})">\n`;
     }
-    for (let [i, node] of nodes.entries()) {
+    for (let [i, node] of state.nodes.entries()) {
+        xml += `      <g id="node_${i}">\n`;
         const letter = letter_path(state.node_letters[i], node, precision, false, true); 
-        const path = pt.hatch( letter, params.svg_hatch_spacing, params.svg_hatch_direction, params.svg_hatch_shorten, true, precision );
-        xml += `       <path d="${path}"/>\n`;
+        
+        if (params.svg_extra_outline) {
+            xml += `        <path id="node_${i}_outline_before" d="${letter}"/>\n`; // outline before
+        }
+        const hatch = pt.hatch( letter, params.svg_hatch_spacing, params.svg_hatch_direction, params.svg_hatch_shorten, true, precision );
+        xml += `        <path id="node_${i}_hatch" ${sf_hatch} d="${hatch}"/>\n`; // hatch
         if (params.svg_crosshatch) {
             const cross = pt.hatch( letter, params.svg_hatch_spacing, params.svg_hatch_direction-90, params.svg_hatch_shorten, true, precision );
-            xml += `       <path d="${cross}"/>\n`;
+            xml += `        <path id="node_${i}_cross" ${sf_hatch} d="${cross}"/>\n`; // crosshatch
         }
+        xml += `        <path id="node_${i}_outline_after" d="${letter}"/>\n`; // outline after
+        xml += `      </g>\n`;
     }
     if (params.layout_center) {
         xml += `      </g>\n`;
     }
-    const letter_m = letter_path('M', state.pos_m);
-    const letter_k = letter_path('K', state.pos_k);
-    if (params.show_m_and_k) {
-        const hatch_m = pt.hatch( letter_m, params.svg_hatch_spacing, params.svg_hatch_direction, params.svg_hatch_shorten, true, precision );
-        xml += `       <path d="${hatch_m}"/>\n`;
-        if (params.svg_crosshatch) {
-            const cross_m = pt.hatch( letter_m, params.svg_hatch_spacing, params.svg_hatch_direction-90, params.svg_hatch_shorten, true, precision );
-            xml += `       <path d="${cross_m}"/>\n`;
-        }
-        const hatch_k = pt.hatch( letter_k, params.svg_hatch_spacing, params.svg_hatch_direction, params.svg_hatch_shorten, true, precision );
-        xml += `       <path d="${hatch_k}"/>\n`;
-        if (params.svg_crosshatch) {
-            const cross_k = pt.hatch( letter_k, params.svg_hatch_spacing, params.svg_hatch_direction-90, params.svg_hatch_shorten, true, precision );
-            xml += `       <path d="${cross_k}"/>\n`;
-        }
-    }
-    xml += `    </g>\n`;
     
-    // letters
-    let stroke_fill = params.svg_show_hatch ? `stroke="${params.node_color}" fill="none"` : `stroke="none" fill="${params.node_color}"`;
-    xml += `    <g id="letters" inkscape:label="letters" inkscape:groupmode="layer" ${stroke_fill}>\n`;
-    if (params.layout_center) {
-        xml += `      <g transform="translate(${dx} ${dy})">\n`;
-    }
-    for (let [i, n] of state.nodes.entries()) {
-        const l = state.node_letters[i]; // letter
-        n = n.map(trunc);
-        xml += '      ' + letter_path(l, n);
-    }
-    if (params.layout_center) {
-        xml += `      </g>\n`;
-    }
     // M and K (part of nodes)
     if (params.show_m_and_k) {
-        if (params.use_m_and_k_color) { xml += `      <g fill="${params.m_and_k_color}">\n`; }
-        xml += '      ' + letter_m;
-        xml += '      ' + letter_k;
-        if (params.use_m_and_k_color) { xml += `      </g>\n`; }
+        const color = params.use_m_and_k_color ? params.m_and_k_color : params.node_color;
+        if (params.svg_show_hatch) {
+            sf_outline = `stroke="${color}" fill="none"`;
+            sf_hatch = sf_outline;
+        } else {
+            sf_outline = `stroke="none" fill="${color}"`;
+            sf_hatch = 'stroke="none" fill="none"';
+            
+        }
+        // Letter M
+        const letter_m = letter_path('M', state.pos_m, precision, false, true);        
+        xml += `      <g id="letter_m" ${sf_outline}>\n`;
+        if (params.svg_extra_outline) {
+           xml += `        <path id="letter_m_outline_before" d="${letter_m}"/>\n`;
+        }
+        const hatch_m = pt.hatch( letter_m, params.svg_hatch_spacing, params.svg_hatch_direction, params.svg_hatch_shorten, true, precision );
+        xml += `        <path id="letter_m_hatch" ${sf_hatch} d="${hatch_m}"/>\n`;
+        if (params.svg_crosshatch) {
+            const cross_m = pt.hatch( letter_m, params.svg_hatch_spacing, params.svg_hatch_direction-90, params.svg_hatch_shorten, true, precision );
+            xml += `        <path id="letter_m_cross" ${sf_hatch} d="${cross_m}"/>\n`;
+        }
+        xml += `        <path id="letter_m_outline_after" d="${letter_m}"/>\n`;
+        xml += `      </g>\n`;
+        // Letter K
+        const letter_k = letter_path('K', state.pos_k, precision, false, true);
+        xml += `      <g id="letter_k" ${sf_outline}>\n`;
+        if (params.svg_extra_outline) {
+           xml += `        <path id="letter_k_outline_before" d="${letter_k}"/>\n`;
+        }
+        const hatch_k = pt.hatch( letter_k, params.svg_hatch_spacing, params.svg_hatch_direction, params.svg_hatch_shorten, true, precision );
+        xml += `        <path id="letter_k_hatch" ${sf_hatch} d="${hatch_k}"/>\n`;
+        if (params.svg_crosshatch) {
+            const cross_k = pt.hatch( letter_k, params.svg_hatch_spacing, params.svg_hatch_direction-90, params.svg_hatch_shorten, true, precision );
+            xml += `        <path id="letter_k_cross" ${sf_hatch} d="${cross_k}"/>\n`;
+        }
+        xml += `        <path id="letter_k_outline_after" d="${letter_k}"/>\n`;
+        xml += `      </g>\n`;
     }
     xml += `    </g>\n`;
     
