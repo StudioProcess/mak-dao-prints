@@ -135,6 +135,9 @@ function flip_line(line) {
 }
 
 function hatch_pattern(bbox, spacing, angle) {
+    // shift pattern slightly to the right and down to prevent wrong intersection calculations
+    // suspicion: wrong calculations happen when pattern line exactly hits a control point
+    const DELTA = 1e-5;
     let lines = [];
 
     function transform_line(line, matrix) {
@@ -148,8 +151,8 @@ function hatch_pattern(bbox, spacing, angle) {
     // console.log(a);
 
     // center of pattern
-    const cx = bbox[0] + bbox[2] / 2;
-    const cy = bbox[1] + bbox[3] / 2;
+    const cx = bbox[0] + bbox[2] / 2 + DELTA;
+    const cy = bbox[1] + bbox[3] / 2 + DELTA;
 
     // center line
     lines.push([cx - a / 2, cy, cx + a / 2, cy]);
