@@ -5,8 +5,8 @@ MODEL=2 # 2 .. AxiDraw V3/A3 or SE/A3
 PEN_POS_DOWN=45 # 0-100 (Default: 40)
 PEN_POS_UP=60 # 0-100 (Default: 60)
 REORDERING=4  # 0-4 (Default: 0) 4..None
-SPEED_PENDOWN=25 # 1-110 (Default: 25)
-SPEED_PENUP=75 # 1-110 (Default: 75)
+SPEED_PENDOWN=10 # 1-110 (Default: 25)
+SPEED_PENUP=30 # 1-110 (Default: 75)
 
 
 PATH=$AXICLI_PATH:$PATH # Set path

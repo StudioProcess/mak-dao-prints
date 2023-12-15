@@ -35,9 +35,9 @@ const params = {
     show_svg: true,
     svg_show_hatch: false,
     svg_hatch_spacing: [0.5, 0.1, undefined, 0.1],
-    svg_hatch_direction: [0, -180, 180, 1],
-    svg_hatch_shorten: [0.5, 0, undefined, 0.1],
-    svg_crosshatch: true,
+    svg_hatch_direction: [90, -180, 180, 1],
+    svg_hatch_shorten: [0.7, 0, undefined, 0.05],
+    svg_crosshatch: false,
     svg_extra_outline: true,
     
     layout_center: true,
