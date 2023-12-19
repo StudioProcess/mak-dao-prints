@@ -11,7 +11,7 @@ const config = {
 
 const params = {
     seed: [10, 0, undefined, 1],
-    num_nodes: [6, 1, undefined, 1],
+    num_nodes: [6, 1, undefined, 1],    
     grid_size: [0, 0, undefined, 5],
     min_dist: [50, 0, undefined, 1],
     border: [60, 0, undefined, 1],

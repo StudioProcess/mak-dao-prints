@@ -29,13 +29,13 @@ let letters_mask = {};
 let state; // state describing the drawing
 let svg_container;
 
-function load_letter_img(letter, cb, suffix = '.png', prefix = '../img/png/') {
+function load_letter_img(letter, cb, suffix = '.png', prefix = './img/png/') {
     const path = prefix + letter + suffix;
     // console.log(`Loading (PNG) ${letter}: ${path}`);
     return loadImage(path, cb);
 }
 
-function load_letter_svg(letter, cb, suffix = '.svg', prefix = '../img/svg/') {
+function load_letter_svg(letter, cb, suffix = '.svg', prefix = './img/svg/') {
     const path = prefix + letter + suffix;
     // console.log(`Loading (SVG) ${letter}: ${path}`);
     return loadStrings(path, cb);
@@ -57,7 +57,7 @@ function preload() {
             letters_mask[letter] = svg_element( strings.join('\n') );
         }, ' Mask.svg');
     }
-    img_logo = loadImage('../img/logo_emboss.png');
+    img_logo = loadImage('./img/logo_emboss.png');
 }
 
 function setup() {
@@ -647,7 +647,9 @@ function draw_svg(state, precision = 2, format_for_export = false) {
     }
     const mask_m = letter_path('M', state.pos_m, precision, true, true);
     const mask_k = letter_path('K', state.pos_k, precision, true, true);
-    clip_paths.push(mask_m, mask_k);
+    if (params.show_m_and_k) {
+        clip_paths.push(mask_m, mask_k);
+    }
     // perform clipping
     paths = clip(paths, clip_paths);
     // append clipped paths
@@ -670,8 +672,10 @@ function draw_svg(state, precision = 2, format_for_export = false) {
                 paths = pt.clip_multiple(paths, letter);
             }
             // clip against m and k
-            paths = pt.clip_multiple(paths, mask_m);
-            paths = pt.clip_multiple(paths, mask_k);
+            if (params.show_m_and_k) {
+                paths = pt.clip_multiple(paths, mask_m);
+                paths = pt.clip_multiple(paths, mask_k);
+            }
             for (let path of paths) {
                 path = pt.join_path(pt.parse_path(path), precision);
                 xml += `      <path d="${path}"/>\n`;
