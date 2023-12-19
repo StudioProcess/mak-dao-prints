@@ -312,8 +312,8 @@ function generate() {
     state.seed = params.seed;
 
     // M and K
-    const pos_m = [width / 2 - M_AND_K_DIST / 2, height / 2];
-    const pos_k = [width / 2 + M_AND_K_DIST / 2, height / 2];
+    const pos_m = [M_AND_K_DIST, height / 2];
+    const pos_k = [width - M_AND_K_DIST, height / 2];
     let excl_boxes = [];
     if (SHOW_M_AND_K) {
         const excl_m = [pos_m[0] - M_AND_K_EXCL / 2, pos_m[1] - M_AND_K_EXCL / 2, M_AND_K_EXCL, M_AND_K_EXCL];

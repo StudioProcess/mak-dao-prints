@@ -1,9 +1,8 @@
 const config = {
-    FORMAT: 53 / 77, // W by H
+    FORMAT: 110 / 220, // W by H
     MAX_W: 600,
     MAX_H: 600,
     PIXEL_DENSITY: 2,
-    FPS: 30,
     SVG_FORMAT: [297, 420],
     SVG_DPI: 600 / 7, // determines printed size (e.g map a length of 600 to 7in -> 600/7)
     SVG_ADD_FRAME: true,
@@ -29,7 +28,7 @@ const params = {
     bezier_bi_control: [50, 0, 100, 1],
     
     show_m_and_k: true,
-    m_and_k_dist: [330, 0, undefined, 1],
+    m_and_k_dist: [45, 0, undefined, 1],
     m_and_k_excl: [60, 0, undefined, 1],
     
     show_svg: true,
