@@ -89,9 +89,12 @@ function draw() {
     state = generate();
     draw_p5(state);
     console.log(state);
+    
     // show svg
-    const svg = draw_svg(state, config.SVG_PRECISION);
-    svg_container.replaceChildren(svg_element(svg));
+    if (params.show_svg) {
+        const svg = draw_svg(state, config.SVG_PRECISION);
+        svg_container.replaceChildren(svg_element(svg));
+    }
 }
 
 // Get format according to ascpect ratio and maximum width/height
