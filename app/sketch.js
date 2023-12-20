@@ -5,27 +5,20 @@ import { config, params } from './params.js';
 import * as pt from './pathtools.js';
 
 const SHOW_INDICES = false;
-// const NODE_SIZE = 10;
-// const STROKE_WEIGHT = 1;
 const USE_LETTERS = true;
-const FILL_LETTERS = false;
 const FILL_CIRCLES = false;
-const USE_NODE_BACKDROP = false;
-const BACKDROP_SCALE = 200;
-
 const SHOW_LOGO = true;
 const LOGO_SIZE = 70;
-
 const MIN_DIST_RETRY = 999;
-
 const SHOW_BI_POINT = false;
 
 // Variables
 let gui;
 let img_logo;
 let letters_img = {};
+let letters_img_mask = {};
 let letters_svg = {};
-let letters_mask = {};
+let letters_svg_mask = {};
 let state; // state describing the drawing
 let svg_container;
 
@@ -50,11 +43,13 @@ function svg_element(svg_text) {
 function preload() {
     for (let letter of ['D', 'ꓷ', 'O', 'M', 'K']) {
         letters_img[letter] = load_letter_img(letter);
+        letters_img_mask[letter] = load_letter_img(letter, null, ' Mask.png');
+        
         load_letter_svg(letter, (strings) => {
             letters_svg[letter] = svg_element( strings.join('\n') );
         });
         load_letter_svg(letter, (strings) => {
-            letters_mask[letter] = svg_element( strings.join('\n') );
+            letters_svg_mask[letter] = svg_element( strings.join('\n') );
         }, ' Mask.svg');
     }
     img_logo = loadImage('./img/logo_emboss.png');
@@ -74,7 +69,7 @@ function setup() {
     gui.addAll(params);
     // gui.show(false);
     
-    const update_on_change = ['seed', 'num_nodes', 'grid_size', 'connect_min', 'connect_max', 'connect_step_chance', 'connect_step_min', 'connect_step_max', 'border', 'min_dist', 'show_m_and_k', 'm_and_k_dist', 'm_and_k_excl', 'use_bezier', 'bezier_control', 'add_bezier_bi', 'bezier_bi_point', 'bezier_bi_control', 'layout_center', 'layout_center_mode', 'svg_show_hatch', 'node_size', 'stroke_weight', 'bg_color', 'conn_color', 'node_color', 'use_m_and_k_color', 'm_and_k_color'];
+    const update_on_change = ['seed', 'num_nodes', 'grid_size', 'connect_min', 'connect_max', 'connect_step_chance', 'connect_step_min', 'connect_step_max', 'border', 'min_dist', 'show_m_and_k', 'm_and_k_dist', 'm_and_k_excl', 'use_bezier', 'bezier_control', 'add_bezier_bi', 'bezier_bi_point', 'bezier_bi_control', 'layout_center', 'layout_center_mode', 'svg_show_hatch', 'node_size', 'stroke_weight', 'bg_color', 'conn_color', 'node_color', 'use_m_and_k_color', 'm_and_k_color', 'show_svg'];
     const update_on_finish_change = ['svg_hatch_spacing', 'svg_hatch_direction', 'svg_hatch_shorten', 'svg_crosshatch', 'svg_extra_outline'];
     const update = () => { redraw(); };
     update_on_change.forEach( x => gui.get(x).onChange(update) );
@@ -481,20 +476,12 @@ function draw_p5(state) {
             if (USE_LETTERS) {
                 const letter = state.node_letters[i];
                 const img = letters_img[letter];
-                if (USE_NODE_BACKDROP) {
-                    noStroke();
-                    fill(BG);
-                    ellipse(...n, NODE_SIZE * BACKDROP_SCALE / 100 * 0.75, NODE_SIZE * BACKDROP_SCALE / 100);
-                }
-                if (FILL_LETTERS) { fill(params.node_color); } else { fill(BG); }
-                rect(...n, NODE_SIZE * 0.66, NODE_SIZE);
+                const mask = letters_img_mask[letter];
+                tint(BG);
+                image(mask, ...n, NODE_SIZE, NODE_SIZE);
+                tint(params.node_color);
                 image(img, ...n, NODE_SIZE, NODE_SIZE);
             } else {
-                if (USE_NODE_BACKDROP) {
-                    noStroke();
-                    fill(BG);
-                    ellipse(...n, NODE_SIZE * BACKDROP_SCALE / 100, NODE_SIZE * BACKDROP_SCALE / 100);
-                }
                 if (FILL_CIRCLES) { fill(params.node_color); noStroke(); }
                 else { fill(BG); stroke(0); }
                 ellipse(...n, NODE_SIZE, NODE_SIZE);
@@ -511,11 +498,10 @@ function draw_p5(state) {
     // draw M and K (extra letters)
     if (params.show_m_and_k && USE_LETTERS) {
         imageMode(CENTER);
+        // no mask needed for m and k
+        tint(params.node_color);
         image(letters_img['M'], ...state.pos_m, NODE_SIZE, NODE_SIZE);
         image(letters_img['K'], ...state.pos_k, NODE_SIZE, NODE_SIZE);
-        // for (let {letter, pos} of state.extra_letters) {
-        //     image(letters_img[letter], ...pos, NODE_SIZE, NODE_SIZE);
-        // }
     }
     
     // draw logo
@@ -559,7 +545,7 @@ function letter_svg_data(letter) {
 }
 
 function mask_svg_data(letter) {
-    return letters_mask[letter].querySelector('path').getAttribute('d');
+    return letters_svg_mask[letter].querySelector('path').getAttribute('d');
 }
 
 function letter_path(letter, pos, decimals = 2, mask = false, data_only = false) {

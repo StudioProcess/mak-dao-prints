@@ -31,7 +31,7 @@ const params = {
     m_and_k_dist: [45, 0, undefined, 1],
     m_and_k_excl: [60, 0, undefined, 1],
     
-    show_svg: true,
+    show_svg: false,
     svg_show_hatch: false,
     svg_hatch_spacing: [0.5, 0.1, undefined, 0.1],
     svg_hatch_direction: [90, -180, 180, 1],
@@ -50,7 +50,6 @@ const params = {
     node_color: '#000',
     use_m_and_k_color: false,
     m_and_k_color: '#000',
-    
     
     'SAVE': function() {},
 };
