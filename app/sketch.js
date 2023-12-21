@@ -146,9 +146,7 @@ function get_random_pos(nodes = [], box = [], excl_boxes = []) {
         return min_d;
     }
 
-    let i = 0,
-        x = 0,
-        y = 0;
+    let i = 0, x = 0, y = 0;
     while (i < MIN_DIST_RETRY) {
         i += 1;
         if (box.length == 4) {
@@ -158,6 +156,7 @@ function get_random_pos(nodes = [], box = [], excl_boxes = []) {
             x = BORDER + random(width - 2 * BORDER);
             y = BORDER + random(height - 2 * BORDER);
         }
+        [x, y] = snap_to_grid([x, y]);
 
         let in_excl_box = false;
 
@@ -176,7 +175,7 @@ function get_random_pos(nodes = [], box = [], excl_boxes = []) {
             break;
         }
     }
-    return snap_to_grid([x, y]);
+    return [x, y];
 }
 
 // find connection that has its middle point nearest to (x,y)

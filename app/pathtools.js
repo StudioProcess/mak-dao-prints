@@ -1,3 +1,7 @@
+// shift coordinates slightly to the right and down to prevent wrong intersection calculations
+// suspicion: wrong calculations happen when pattern line exactly hits a control point
+// or: when lines to clip are perfectly horizontal / vertical
+const EPSILON = 1e-5;
 
 // Parse SVG path to a structured format
 function parse_path(d) {
@@ -93,7 +97,11 @@ function transform_path(d, matrix, decimals = null) {
 function clip(d, clip_d) {
     let p = new paper.Path(d);
     const clip = new paper.CompoundPath(clip_d);
-
+    if (!p.closed) {
+        // Shift one point slightly to prevent wrong clipping of horizontal / vertical lines
+        p.firstSegment.point.x += EPSILON;
+        p.firstSegment.point.y += EPSILON;
+    }
     // no intersection
     if (!p.intersects(clip)) {
         // inside or outside?
@@ -135,9 +143,6 @@ function flip_line(line) {
 }
 
 function hatch_pattern(bbox, spacing, angle) {
-    // shift pattern slightly to the right and down to prevent wrong intersection calculations
-    // suspicion: wrong calculations happen when pattern line exactly hits a control point
-    const DELTA = 1e-5;
     let lines = [];
 
     function transform_line(line, matrix) {
@@ -151,8 +156,10 @@ function hatch_pattern(bbox, spacing, angle) {
     // console.log(a);
 
     // center of pattern
-    const cx = bbox[0] + bbox[2] / 2 + DELTA;
-    const cy = bbox[1] + bbox[3] / 2 + DELTA;
+    // shift pattern slightly to the right and down to prevent wrong intersection calculations
+    // suspicion: wrong calculations happen when pattern line exactly hits a control point
+    const cx = bbox[0] + bbox[2] / 2 + EPSILON;
+    const cy = bbox[1] + bbox[3] / 2 + EPSILON;
 
     // center line
     lines.push([cx - a / 2, cy, cx + a / 2, cy]);
