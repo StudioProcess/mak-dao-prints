@@ -465,6 +465,22 @@ function draw_p5(state) {
         }
     }
     
+    // draw bifurcation
+    if (params.add_bezier_bi && state.bifurcation) {
+        const nodes = state.nodes;
+        const conn = state.bifurcation.from_conn;
+        const n = state.bifurcation.to_node;
+        noFill();
+        stroke(params.conn_color);
+        const { bezier: b, point: p } = bifurcation(...nodes[conn[0]], ...nodes[conn[1]], ...nodes[n]);
+        bezier(...b);
+        if (SHOW_BI_POINT) {
+            fill(0);
+            noStroke();
+            ellipse(...p, NODE_SIZE / 4, NODE_SIZE / 4);
+        }
+    }
+    
     // draw nodes
     if (NODE_SIZE > 0) {
         ellipseMode(CENTER);
@@ -511,25 +527,6 @@ function draw_p5(state) {
         blendMode(MULTIPLY);
         tint(255, 255 * 0.5); // half opacity
         image(img_logo, width - LOGO_SIZE, height - LOGO_SIZE, LOGO_SIZE, LOGO_SIZE);
-        pop();
-    }
-    
-    // draw bifurcation
-    if (params.add_bezier_bi && state.bifurcation) {
-        push();
-        translate(dx, dy);
-        const nodes = state.nodes;
-        const conn = state.bifurcation.from_conn;
-        const n = state.bifurcation.to_node;
-        noFill();
-        stroke(params.conn_color);
-        const { bezier: b, point: p } = bifurcation(...nodes[conn[0]], ...nodes[conn[1]], ...nodes[n]);
-        bezier(...b);
-        if (SHOW_BI_POINT) {
-            fill(0);
-            noStroke();
-            ellipse(...p, NODE_SIZE / 3, NODE_SIZE / 3);
-        }
         pop();
     }
 }
