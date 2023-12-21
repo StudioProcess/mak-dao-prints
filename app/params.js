@@ -10,7 +10,7 @@ const config = {
 };
 
 const params = {
-    seed: [10, 0, undefined, 1],
+    seed: [4, 0, undefined, 1],
     num_nodes: [6, 1, undefined, 1],    
     grid_size: [0, 0, undefined, 5],
     min_dist: [50, 0, undefined, 1],
@@ -21,7 +21,7 @@ const params = {
     connect_step_min: [1, 1, undefined, 1],
     connect_step_max: [5, 1, undefined, 1],
     
-    use_bezier: true,
+    use_bezier:  ['vertical', ['none', 'horizontal', 'vertical']],
     bezier_control: [75, 0, 100, 1],
     add_bezier_bi: true,
     bezier_bi_point: [40, 0, 100, 1],

@@ -113,12 +113,12 @@ function pipe_h(x1, y1, x2, y2) {
     return [x1, y1, m1, y1, m2, y2, x2, y2];
 }
 
-// function pipe_v(x1, y1, x2, y2) {
-//   // middle point
-//   const mx = x1 + (x2 - x1) * BEZIER_CONTROL/100;
-//   // const my = y1 + (y2 - y1) * BEZIER_CONTROL/100;
-//   bezier(x1, y1, x1, my, x2, my, x2, y2)
-// }
+function pipe_v(x1, y1, x2, y2) {
+  // middle point
+  const m1 = y1 + (y2 - y1) * params.bezier_control / 100;
+  const m2 = y2 - (y2 - y1) * params.bezier_control / 100;
+  return [x1, y1, x1, m1, x2, m2, x2, y2];
+}
 
 function snap_to_grid(arr) {
     const GRID_SIZE = params.grid_size;
@@ -228,7 +228,7 @@ function bezier_slope(t, x1, y1, x2, y2, x3, y3, x4, y4) {
     ];
 }
 
-function bifurcation(x1, y1, x2, y2, x3, y3) {
+function bifurcation_h(x1, y1, x2, y2, x3, y3) {
     const BEZIER_BI_POINT = params.bezier_bi_point;
     const BEZIER_BI_CONTROL = params.bezier_bi_control;
     // make sure point 1 is left of point2
@@ -264,6 +264,51 @@ function bifurcation(x1, y1, x2, y2, x3, y3) {
         bezier: [...p, ...bc1, ...bc2, x3, y3],
         point: p
     };
+}
+
+function bifurcation_v(x1, y1, x2, y2, x3, y3) {
+    const BEZIER_BI_POINT = params.bezier_bi_point;
+    const BEZIER_BI_CONTROL = params.bezier_bi_control;
+    // make sure point 1 is above of point2
+    if (y1 > y2) {
+        [x1, x2] = [x2, x1];
+        [y1, y2] = [y2, y1];
+    }
+    const my = y1 + (y2 - y1) / 2; // middle (y) between point 1 and point 2
+    // bezier control points between point 1 and point 2
+    const c1 = [x1, y1 + (y2 - y1) / 100 * params.bezier_control];
+    const c2 = [x2, y2 - (y2 - y1) / 100 * params.bezier_control];
+
+    let p, s;
+    if (y3 >= my) { // go top left to bottom. point 1 to point 2
+        p = bezier_point(BEZIER_BI_POINT / 100, x1, y1, ...c1, ...c2, x2, y2); // bifurcation point
+        s = bezier_slope(BEZIER_BI_POINT / 100, x1, y1, ...c1, ...c2, x2, y2); // slope vector
+    } else {
+        p = bezier_point(BEZIER_BI_POINT / 100, x2, y2, ...c2, ...c1, x1, y1); // bifurcation point
+        s = bezier_slope(BEZIER_BI_POINT / 100, x2, y2, ...c2, ...c1, x1, y1); // slope vector
+    }
+    // fill(0)
+    // ellipse(...p, 5, 5);
+
+    // normalize slope
+    let sl = dist(0, 0, ...s);
+    s = [s[0] / sl, s[1] / sl];
+    // bifurcation bezier
+    const blen = dist(...p, x2, y2); // length from bifurcation point to original branch endpoint
+    const bc1 = [p[0] + s[0] * blen / 100 * BEZIER_BI_CONTROL, p[1] + s[1] * blen / 100 * BEZIER_BI_CONTROL];
+    const bc2 = [x3 - (x3 - p[0]) / 100 * BEZIER_BI_CONTROL, y3];
+    return {
+        bezier: [...p, ...bc1, ...bc2, x3, y3],
+        point: p
+    };
+}
+
+function bifurcation(...args) {
+    if (params.use_bezier == 'vertical') {
+        return bifurcation_v(...args);
+    } else {
+        return bifurcation_h(...args);
+    }
 }
 
 // Save text data to file
@@ -457,8 +502,10 @@ function draw_p5(state) {
     stroke(params.conn_color);
     strokeWeight(params.stroke_weight);
     for (let [i, j] of state.connections) {
-        if (params.use_bezier) {
+        if (params.use_bezier == 'horizontal') {
             bezier( ...pipe_h(...nodes[i], ...nodes[j]) );
+        } else if (params.use_bezier == 'vertical') {
+            bezier( ...pipe_v(...nodes[i], ...nodes[j]) );
         } else {
             line(...nodes[i], ...nodes[j]);
         }
@@ -621,9 +668,12 @@ function draw_svg(state, precision = 2, format_for_export = false) {
     // paths to clip
     let paths = [];
     for (let [i, j] of state.connections) {
-        if (params.use_bezier) {
+        if (params.use_bezier == 'horizontal') {
             const b = pipe_h(...nodes[i], ...nodes[j]).map(trunc); // unclipped connection between nodes i and j
             paths.push( `M ${b[0]} ${b[1]} C ${b[2]} ${b[3]} ${b[4]} ${b[5]} ${b[6]} ${b[7]}` ); // path for the connection
+        } else if (params.use_bezier == 'vertical') {
+            const b = pipe_v(...nodes[i], ...nodes[j]).map(trunc);
+            paths.push( `M ${b[0]} ${b[1]} C ${b[2]} ${b[3]} ${b[4]} ${b[5]} ${b[6]} ${b[7]}` );
         } else {
             const l = [...nodes[i], ...nodes[j]];
             paths.push(`M ${l[0]} ${l[1]} L ${l[2]} ${l[3]}`);
