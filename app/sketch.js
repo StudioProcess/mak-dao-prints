@@ -583,6 +583,10 @@ function get_layout_translation(nodes) {
     return [dx, dy];
 }
 
+function vecsub(v1, v2) {
+    return [ v1[0]-v2[0], v1[1]-v2[1] ];
+}
+
 function draw_svg(state, precision = 2, format_for_export = false) {
     const size = format_for_export ? [config.SVG_FORMAT[0] + 'mm', config.SVG_FORMAT[1] + 'mm'] : [width, height];
     const format_px = format_for_export ? [mm2px(config.SVG_FORMAT[0]), mm2px(config.SVG_FORMAT[1])] : [width, height];
@@ -607,7 +611,8 @@ function draw_svg(state, precision = 2, format_for_export = false) {
     
     // translation for connections and letters (except m and k)
     const nodes = state.nodes;
-    let [dx, dy] = get_layout_translation(nodes);
+    const d = get_layout_translation(nodes);
+    const [dx, dy] = d;
     
     // connections
     xml += `    <g id="connections" inkscape:label="connections" inkscape:groupmode="layer" stroke="${params.conn_color}">\n`;
@@ -631,8 +636,9 @@ function draw_svg(state, precision = 2, format_for_export = false) {
         const letter = letter_path( state.node_letters[i], node, precision, true, true); // letter mask path for node
         clip_paths.push(letter);
     }
-    const mask_m = letter_path('M', state.pos_m, precision, true, true);
-    const mask_k = letter_path('K', state.pos_k, precision, true, true);
+    // m and k are not affected by layout centering, need to adjust it manually to get proper clipping
+    const mask_m = letter_path('M', vecsub(state.pos_m, d), precision, true, true);
+    const mask_k = letter_path('K', vecsub(state.pos_k, d), precision, true, true);
     if (params.show_m_and_k) {
         clip_paths.push(mask_m, mask_k);
     }
