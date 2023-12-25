@@ -1,7 +1,7 @@
 // shift coordinates slightly to the right and down to prevent wrong intersection calculations
 // suspicion: wrong calculations happen when pattern line exactly hits a control point
 // or: when lines to clip are perfectly horizontal / vertical
-const EPSILON = 1e-5;
+const EPSILON = 1e-4;
 
 // Parse SVG path to a structured format
 function parse_path(d) {
@@ -98,9 +98,11 @@ function clip(d, clip_d) {
     let p = new paper.Path(d);
     const clip = new paper.CompoundPath(clip_d);
     if (!p.closed) {
-        // Shift one point slightly to prevent wrong clipping of horizontal / vertical lines
+        // Shift points slightly to prevent wrong clipping of horizontal / vertical lines
         p.firstSegment.point.x += EPSILON;
         p.firstSegment.point.y += EPSILON;
+        p.lastSegment.point.x -= EPSILON;
+        p.lastSegment.point.y -= EPSILON;
     }
     // no intersection
     if (!p.intersects(clip)) {

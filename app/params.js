@@ -10,7 +10,7 @@ const config = {
 };
 
 const params = {
-    seed: [4, 0, undefined, 1],
+    seed: [20, 0, undefined, 1],
     num_nodes: [6, 1, undefined, 1],    
     grid_size: [0, 0, undefined, 5],
     min_dist: [50, 0, undefined, 1],
