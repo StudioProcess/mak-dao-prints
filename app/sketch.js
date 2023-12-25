@@ -55,8 +55,12 @@ function preload() {
     img_logo = loadImage('./img/logo_emboss.png');
 }
 
+function resize() {
+    resizeCanvas(...get_size(params.format_w/params.format_h, config.MAX_W, config.MAX_H))
+}
+
 function setup() {
-    createCanvas(...get_size(config.FORMAT, config.MAX_W, config.MAX_H));
+    createCanvas(...get_size(params.format_w[0]/params.format_h[0], config.MAX_W, config.MAX_H));
     pixelDensity(config.PIXEL_DENSITY);
     frameRate(config.FPS);
     noLoop();
@@ -77,6 +81,8 @@ function setup() {
     svg_container = document.querySelector("#svg_container");
     gui.get('show_svg').onFinishChange(shown => { svg_container.style.display = shown ? 'flex' : 'none'; });
     gui.get('SAVE').onChange( () => { save(); })
+    update_on_change.forEach( x => gui.get(x).onChange(update) );
+    ['format_w', 'format_h'].forEach( x => gui.get(x).onFinishChange(resize) );
 }
 
 function draw() {
@@ -340,8 +346,8 @@ function save_text(text, filename, charset = 'text/plain') {
     document.body.removeChild(link); // Firefox
 }
 
-function mm2px(mm, dpi = config.SVG_DPI) {
-    return mm / 25.4 * dpi;
+function mm2px(mm, ppi) {
+    return mm / 25.4 * ppi;
 }
 
 function save_svg() {
@@ -595,9 +601,10 @@ function draw_p5(state) {
 }
 
 function decimals(precision = 1) {
-    return function(num) {
-        return +num.toFixed(precision);
+    if (precision < 0 || precision === null || precision === undefined) {
+        return num => num;
     }
+    return (num) => +num.toFixed(precision);
 }
 
 function letter_svg_data(letter) {
@@ -650,12 +657,25 @@ function vecsub(v1, v2) {
     return [ v1[0]-v2[0], v1[1]-v2[1] ];
 }
 
+// calculate ppi value based on fitting a px sized rect inside a mm sized one
+function get_ppi(max_w_px, max_h_px, w_mm, h_mm) {
+    if (w_mm > h_mm) {
+        // landscape
+        return max_w_px / w_mm * 25.4;
+    } else {
+        // portrait
+        return max_h_px / h_mm * 25.4;
+    }
+}
+
 function draw_svg(state, precision = 2, format_for_export = false) {
-    const size = format_for_export ? [config.SVG_FORMAT[0] + 'mm', config.SVG_FORMAT[1] + 'mm'] : [width, height];
-    const format_px = format_for_export ? [mm2px(config.SVG_FORMAT[0]), mm2px(config.SVG_FORMAT[1])] : [width, height];
     const trunc = decimals(precision);
+    const ppi = get_ppi(width, height, params.format_w, params.format_h);
+    const svg_px = [ trunc(mm2px(config.SVG_FORMAT[0], ppi)), trunc(mm2px(config.SVG_FORMAT[1], ppi)) ];
+    const svg_mm = [ config.SVG_FORMAT[0] + 'mm', config.SVG_FORMAT[1] + 'mm'] ;
+    const size = format_for_export ?  svg_mm : [width, height];
+    const format_px = format_for_export ? svg_px : [width, height];
     
-    // console.log(format_px);
     let xml = `<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape" width="${size[0]}" height="${size[1]}" viewBox="0 0 ${format_px[0]} ${format_px[1]}" stroke="black" fill="none" stroke-linecap="round" stroke-width="${params.stroke_weight}">\n`;
     
     // background rect (prefix '%' in layer name means don't print in axidraw)
