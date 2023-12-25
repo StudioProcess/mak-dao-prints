@@ -114,10 +114,10 @@ function pipe_h(x1, y1, x2, y2) {
 }
 
 function pipe_v(x1, y1, x2, y2) {
-  // middle point
-  const m1 = y1 + (y2 - y1) * params.bezier_control / 100;
-  const m2 = y2 - (y2 - y1) * params.bezier_control / 100;
-  return [x1, y1, x1, m1, x2, m2, x2, y2];
+    // middle point
+    const m1 = y1 + (y2 - y1) * params.bezier_control / 100;
+    const m2 = y2 - (y2 - y1) * params.bezier_control / 100;
+    return [x1, y1, x1, m1, x2, m2, x2, y2];
 }
 
 function snap_to_grid(arr) {
@@ -236,14 +236,22 @@ function bifurcation_h(x1, y1, x2, y2, x3, y3) {
         [x1, x2] = [x2, x1];
         [y1, y2] = [y2, y1];
     }
-    const mx = x1 + (x2 - x1) / 2; // middle (x) between point 1 and point 2
+    // middle point between point 1 and point 2
+    const m = [x1 + (x2 - x1) / 2, y1 + (y2 - y1) / 2];
+    
     // bezier control points between point 1 and point 2
-    const c1 = [x1 + (x2 - x1) / 100 * params.bezier_control, y1];
-    const c2 = [x2 - (x2 - x1) / 100 * params.bezier_control, y2];
+    let c1, c2; 
+    if (params.use_bezier === 'none') {
+        // straight line, assume midpoint for both control points
+        c1 = m;
+        c2 = m;
+    } else {
+        c1 = [x1 + (x2 - x1) / 100 * params.bezier_control, y1];
+        c2 = [x2 - (x2 - x1) / 100 * params.bezier_control, y2];
+    }
 
     let p, s;
-
-    if (x3 >= mx) { // go from left to right. point 1 to point 2
+    if (x3 >= m[0]) { // go from left to right. point 1 to point 2
         p = bezier_point(BEZIER_BI_POINT / 100, x1, y1, ...c1, ...c2, x2, y2); // bifurcation point
         s = bezier_slope(BEZIER_BI_POINT / 100, x1, y1, ...c1, ...c2, x2, y2); // slope vector
     } else {
@@ -274,13 +282,22 @@ function bifurcation_v(x1, y1, x2, y2, x3, y3) {
         [x1, x2] = [x2, x1];
         [y1, y2] = [y2, y1];
     }
-    const my = y1 + (y2 - y1) / 2; // middle (y) between point 1 and point 2
+    // middle point between point 1 and point 2
+    const m = [x1 + (x2 - x1) / 2, y1 + (y2 - y1) / 2];
+    
     // bezier control points between point 1 and point 2
-    const c1 = [x1, y1 + (y2 - y1) / 100 * params.bezier_control];
-    const c2 = [x2, y2 - (y2 - y1) / 100 * params.bezier_control];
+    let c1, c2; 
+    if (params.use_bezier === 'none') {
+        // straight line, assume midpoint for both control points
+        c1 = m;
+        c2 = m;
+    } else {
+        c1 = [x1, y1 + (y2 - y1) / 100 * params.bezier_control];
+        c2 = [x2, y2 - (y2 - y1) / 100 * params.bezier_control];
+    }
 
     let p, s;
-    if (y3 >= my) { // go top left to bottom. point 1 to point 2
+    if (y3 >= m[1]) { // go top left to bottom. point 1 to point 2
         p = bezier_point(BEZIER_BI_POINT / 100, x1, y1, ...c1, ...c2, x2, y2); // bifurcation point
         s = bezier_slope(BEZIER_BI_POINT / 100, x1, y1, ...c1, ...c2, x2, y2); // slope vector
     } else {
