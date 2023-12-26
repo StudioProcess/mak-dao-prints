@@ -352,7 +352,7 @@ function mm2px(mm, ppi) {
 
 function save_svg() {
     const timestamp = new Date().toISOString();
-    const text = draw_svg(state, config.SVG_PRECISION, true); // flag for export
+    const text = draw_svg(state, config.SVG_DECIMALS, true); // flag for export
     save_text(text, timestamp + '.svg', 'image/svg+xml');
     return timestamp;
 }
@@ -700,7 +700,7 @@ function draw_svg(state, precision = 2, format_for_export = false) {
     // connections
     xml += `    <g id="connections" inkscape:label="connections" inkscape:groupmode="layer" stroke="${params.conn_color}">\n`;
     if (params.layout_center) {
-        xml += `      <g transform="translate(${dx} ${dy})">\n`;
+        xml += `      <g transform="translate(${trunc(dx)} ${trunc(dy)})">\n`;
     }
     // paths to clip
     let paths = [];
@@ -782,7 +782,7 @@ function draw_svg(state, precision = 2, format_for_export = false) {
     }
     xml += `    <g id="letters" inkscape:label="letters" inkscape:groupmode="layer" ${sf_outline}>\n`;
     if (params.layout_center) {
-        xml += `      <g transform="translate(${dx} ${dy})">\n`;
+        xml += `      <g transform="translate(${trunc(dx)} ${trunc(dy)})">\n`;
     }
     for (let [i, node] of state.nodes.entries()) {
         xml += `      <g id="node_${i}">\n`;

@@ -4,7 +4,7 @@ const config = {
     PIXEL_DENSITY: 2,
     SVG_FORMAT: [297, 420], // SVG full format in mm. Artwork will be placed in the middle (determined by params.format_w and paramts.format_h)
     SVG_ADD_FRAME: true, // Add frame around canvas in SVG?
-    SVG_DECIMALS: 3,
+    SVG_DECIMALS: 2,
     FPS: 25,
     EXPORT_PNG: true,
     EXPORT_JSON: true,
