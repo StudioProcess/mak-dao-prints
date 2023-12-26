@@ -866,10 +866,22 @@ function randomizeSeed(do_redraw = true) {
     }
 }
 
-function save() {
-    // util.save_canvas( params );
+function delay(time = 0) {
+    return new Promise( (resolve, reject) => {
+        setTimeout(resolve, time);
+    });
+}
+
+async function save() {
     const ts = save_svg();
-    // saveCanvas(ts + '.png');
+    if (config.EXPORT_PNG) {
+        await delay(100);
+        util.save_canvas(ts);
+    }
+    if (config.EXPORT_JSON) {
+        await delay(100);
+        util.save_json({config, params}, ts);
+    }
 }
 
 document.addEventListener('keydown', e => {

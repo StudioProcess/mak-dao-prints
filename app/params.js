@@ -6,6 +6,8 @@ const config = {
     SVG_ADD_FRAME: true, // Add frame around canvas in SVG?
     SVG_DECIMALS: 3,
     FPS: 25,
+    EXPORT_PNG: true,
+    EXPORT_JSON: true,
 };
 
 const params = {

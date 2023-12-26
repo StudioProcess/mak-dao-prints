@@ -83,24 +83,33 @@ export async function load_text(url) {
 // Optionally takes a params object, which will be saved as JSON, after a 1 sec delay
 // NOTE: Needs THREE.WebGLRenderer with preserveDrawingBuffer=true
 // TODO: Firefox seems to save only the bottom left quadrant of the canvas. This also happens with 'Right-Click/Save Image as...'
-export function save_canvas(params = undefined) {
-    let timestamp = new Date().toISOString();
+export function save_canvas(filename = undefined, params = undefined) {
+    if (filename === undefined && filename != null) {
+        const timestamp = new Date().toISOString();
+        filename =  timestamp;
+    }
     
-    let canvas = document.querySelector('canvas');
-    let link = document.createElement('a');
-    link.download = timestamp + '.png';
+    const canvas = document.querySelector('canvas');
+    const link = document.createElement('a');
+    link.download = filename + '.png';
     link.href = canvas.toDataURL();
     link.style.display = 'none';     // Firefox
     document.body.appendChild(link); // Firefox
     link.click();
     document.body.removeChild(link); // Firefox
     
-    if (params) {
-        let text = JSON.stringify(params, null, 2);
-        setTimeout(() => {
-            save_text(text, timestamp + '.json');
-        }, 1000); // add delay for safari
+    if (params !== undefined && params !== null) {
+        save_json(params, filename, 1000);
     }
+    
+    return filename;
+}
+
+export function save_json(obj, filename = undefined, delay = 0) {
+    const text = JSON.stringify(obj, null, 2);
+    setTimeout(() => {
+        save_text(text, filename + '.json');
+    }, delay); // add delay for safari
 }
 
 
