@@ -1,6 +1,6 @@
 #!/bin/zsh
 
-AXICLI_PATH="$HOME/code/axicli/venv/bin/"
+AXICLI_BIN="$HOME/code/axicli/axicli"
 MODEL=2 # 2 .. AxiDraw V3/A3 or SE/A3
 PEN_POS_DOWN=45 # 0-100 (Default: 40)
 PEN_POS_UP=60 # 0-100 (Default: 60)
@@ -11,12 +11,15 @@ OUT="plot.svg"
 
 YELLOW='\033[93m'
 OFF='\033[0m'
-PATH=$AXICLI_PATH:$PATH # Set path
 
 trap ctrl_c INT
 
 function ctrl_c() {
     # Interrupted. Just continue
+}
+
+function axicli() {
+    $AXICLI_BIN "$@"
 }
 
 function plot() {
