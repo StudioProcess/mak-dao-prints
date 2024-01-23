@@ -3,7 +3,8 @@ const config = {
     MAX_H: 600, // Max height in px. For p5/canvas rendering only
     PIXEL_DENSITY: 2,
     SVG_FORMAT: [210, 297], // SVG full format in mm. Artwork will be placed in the middle (determined by params.format_w and paramts.format_h)
-    SVG_ADD_FRAME: true, // Add frame around canvas in SVG?
+    SVG_ADD_FRAME: false, // Add frame around canvas in SVG?
+    SVG_PAUSE_BETWEEN_LAYERS: true,
     SVG_DECIMALS: 2,
     FPS: 25,
     EXPORT_PNG: true,

@@ -673,24 +673,27 @@ function draw_svg(state, precision = 2, format_for_export = false) {
     const ppi = get_ppi(width, height, params.format_w, params.format_h);
     const svg_px = [ trunc(mm2px(config.SVG_FORMAT[0], ppi)), trunc(mm2px(config.SVG_FORMAT[1], ppi)) ];
     const svg_mm = [ config.SVG_FORMAT[0] + 'mm', config.SVG_FORMAT[1] + 'mm'] ;
-    const size = format_for_export ?  svg_mm : [width, height];
+    const size = format_for_export ? svg_mm : [width, height];
     const format_px = format_for_export ? svg_px : [width, height];
+    
+    // Note: For Axidraw Layer Control see: https://wiki.evilmadscientist.com/AxiDraw_Layer_Control
+    const lc_pause = "! ";
+    const lc_ignore = "% ";
+    const pause = config.SVG_PAUSE_BETWEEN_LAYERS ? lc_pause : "";
     
     let xml = `<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape" width="${size[0]}" height="${size[1]}" viewBox="0 0 ${format_px[0]} ${format_px[1]}" stroke="black" fill="none" stroke-linecap="round" stroke-width="${params.stroke_weight}">\n`;
     
     // background rect (prefix '%' in layer name means don't print in axidraw)
-    xml += `  <g id="bg" inkscape:label="% bg" inkscape:groupmode="layer"><rect width="${format_px[0]}" height="${format_px[1]}" stroke="none" fill="${params.bg_color}"/></g>\n`;
+    xml += `  <g id="bg" inkscape:label="${lc_ignore}bg" inkscape:groupmode="layer"><rect width="${format_px[0]}" height="${format_px[1]}" stroke="none" fill="${params.bg_color}"/></g>\n`;
     
     if (format_for_export) {
-        xml += `  <g transform="translate(${trunc(format_px[0]/2)} ${trunc(format_px[1]/2)}) translate(${-width/2} ${-height/2})">\n`;
-        if (config.SVG_ADD_FRAME) {
-            xml += `    <rect id="frame" x="0" y="0" width="${width}" height="${height}"/>\n`;
-        }
+        xml += `  <g id="content" transform="translate(${trunc(format_px[0]/2)} ${trunc(format_px[1]/2)}) translate(${-width/2} ${-height/2})">\n`;
+        const vis = config.SVG_ADD_FRAME ? "visible" : "hidden";
+        const pre = config.SVG_ADD_FRAME ? "" : lc_ignore; // Don't add pause, doesn't work on first layer
+        xml += `    <g id="frame" visibility="${vis}" inkscape:label="${pre}frame" inkscape:groupmode="layer"><rect x="0" y="0" width="${width}" height="${height}"/></g>\n`;
     } else {
        xml += `  <g>\n`;
     }
-
-    // Note: For Axidraw Layer Control see: https://wiki.evilmadscientist.com/AxiDraw_Layer_Control
     
     // translation for connections and letters (except m and k)
     const nodes = state.nodes;
@@ -698,7 +701,10 @@ function draw_svg(state, precision = 2, format_for_export = false) {
     const [dx, dy] = d;
     
     // connections
-    xml += `    <g id="connections" inkscape:label="connections" inkscape:groupmode="layer" stroke="${params.conn_color}">\n`;
+    {
+        const pre = config.SVG_ADD_FRAME ? pause : ""; // Add pause if this isn't the first layer (i.e. frame was drawn)
+        xml += `    <g id="connections" inkscape:label="${pre}connections" inkscape:groupmode="layer" stroke="${params.conn_color}">\n`;
+    }
     if (params.layout_center) {
         xml += `      <g transform="translate(${trunc(dx)} ${trunc(dy)})">\n`;
     }
@@ -780,7 +786,7 @@ function draw_svg(state, precision = 2, format_for_export = false) {
         sf_outline = `stroke="none" fill="${params.node_color}"`;
         sf_hatch = 'stroke="none" fill="none"';
     }
-    xml += `    <g id="letters" inkscape:label="letters" inkscape:groupmode="layer" ${sf_outline}>\n`;
+    xml += `    <g id="letters" inkscape:label="${pause}letters" inkscape:groupmode="layer" ${sf_outline}>\n`;
     if (params.layout_center) {
         xml += `      <g transform="translate(${trunc(dx)} ${trunc(dy)})">\n`;
     }
@@ -816,7 +822,7 @@ function draw_svg(state, precision = 2, format_for_export = false) {
             
         }
         // Letter M
-        const letter_m = letter_path('M', state.pos_m, precision, false, true);        
+        const letter_m = letter_path('M', state.pos_m, precision, false, true);
         xml += `      <g id="letter_m" ${sf_outline}>\n`;
         if (params.svg_extra_outline) {
            xml += `        <path id="letter_m_outline_before" d="${letter_m}"/>\n`;
